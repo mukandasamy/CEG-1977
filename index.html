@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CEG 1977 Batch Golden Jubilee</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; font-size: 14px; color: #333; }
+        
+        /* Silhouette Placeholder Logic */
+        .img-container {
+            background-color: #e5e7eb;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%239ca3af'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: 50%;
+            display: inline-block;
+            border: 1px solid #ddd;
+        }
+
+        /* Strict Original Size - No scaling */
+        .img-orig {
+            display: block;
+            width: auto !important;
+            height: auto !important;
+            max-width: none !important;
+        }
+
+        .filter-btn { font-size: 14px; padding: 4px 12px; border: 1px solid #ddd; background: #fff; cursor: pointer; border-radius: 4px; }
+        .filter-active { background-color: #1e40af; color: #fff; border-color: #1e3a8a; }
+        
+        .sticky-header th { position: sticky; top: 0; background: #f8f9fa; z-index: 10; border-bottom: 2px solid #dee2e6; text-align: left; padding: 8px; }
+        .modal-overlay { background: rgba(0,0,0,0.7); backdrop-filter: blur(2px); }
+    </style>
+</head>
+<body class="bg-gray-50">
+
+    <header class="bg-white border-b px-4 py-2 flex items-center justify-between">
+        <div class="flex items-center gap-4">
+            <img src="group_pics/college-1.jpeg" alt="CEG" class="h-12 w-auto" onerror="this.parentElement.style.display='none'">
+            <h1 class="text-xl font-bold text-blue-900 uppercase tracking-tight">CEG 1977 Batch Golden Jubilee</h1>
+        </div>
+        <div class="flex items-center gap-3">
+            <input type="text" id="searchInput" oninput="applyFilters()" placeholder="Search data..." class="border rounded px-3 py-1 w-64 outline-none">
+            <button onclick="openGlobalGallery()" class="bg-blue-800 text-white px-4 py-1 rounded hover:bg-blue-900 transition">Gallery</button>
+        </div>
+    </header>
+
+    <section class="p-3 bg-white border-b shadow-sm space-y-2">
+        <div class="flex justify-between items-start">
+            <div class="space-y-2 flex-1">
+                <div class="flex items-center gap-4"><span class="font-bold w-20">Branch:</span> <div id="branchContainer" class="flex flex-wrap gap-2"></div></div>
+                <div class="flex items-center gap-4"><span class="font-bold w-20">Month:</span> <div id="monthContainer" class="flex flex-wrap gap-2"></div></div>
+                <div class="flex items-center gap-4"><span class="font-bold w-20">A-Z:</span> <div id="alphaContainer" class="flex flex-wrap gap-1"></div></div>
+            </div>
+            <div class="flex flex-col items-end border-l pl-4 min-w-[160px]">
+                <button onclick="toggleViewMode()" id="viewModeBtn" class="bg-gray-800 text-white px-4 py-1 rounded w-full mb-2">Show Card View</button>
+                <button onclick="clearFilters()" class="text-red-800 text-base underline mb-2">Clear Filters</button>
+                <div class="text-right">
+                    <span id="recordCount" class="text-xl font-bold text-blue-800">0</span>
+                    <span class="text-[10px] text-gray-500 uppercase block font-bold">Records</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <main id="contentArea" class="p-2 overflow-auto" style="height: calc(100vh - 220px);">
+        <div id="tableView" class="bg-white border">
+            <table class="w-full">
+                <thead class="sticky-header">
+                    <tr><th>Name</th><th>Branch</th><th>DOB</th><th>Email</th><th>Phone</th><th>Action</th></tr>
+                </thead>
+                <tbody id="tableBody" class="divide-y divide-gray-100"></tbody>
+            </table>
+        </div>
+        <div id="cardGrid" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+    </main>
+
+    <footer class="fixed bottom-0 w-full bg-white border-t p-2 flex justify-between items-center px-6">
+        <div class="flex items-center gap-2">
+            <span>Show</span>
+            <select id="pageSize" onchange="changePageSize()" class="border rounded p-1">
+                <option value="10">10</option><option value="25">25</option><option value="50">50</option><option value="100">100</option>
+            </select>
+        </div>
+        <div class="flex items-center gap-4 font-bold">
+            <button id="prevBtn" onclick="prevPage()" class="px-3 py-1 border rounded disabled:opacity-30">Prev</button>
+            <span id="pageInfo">Page 1</span>
+            <button id="nextBtn" onclick="nextPage()" class="px-3 py-1 border rounded disabled:opacity-30">Next</button>
+        </div>
+    </footer>
+
+    <div id="modal1" class="hidden fixed inset-0 modal-overlay z-50 flex items-center justify-center">
+        <div class="bg-white w-11/12 max-h-[90vh] overflow-auto rounded p-6 relative">
+            <button onclick="closeModal('modal1')" class="absolute top-2 right-4 text-3xl">&times;</button>
+            <div id="modal1PicBtn" class="absolute top-10 right-6"></div>
+            <div id="modal1Images" class="flex gap-4 mb-6 overflow-x-auto items-start py-2"></div>
+            <div id="modal1Content" class="space-y-2 border-t pt-4"></div>
+        </div>
+    </div>
+
+    <div id="modal2" class="hidden fixed inset-0 modal-overlay z-[60] flex items-center justify-center">
+        <div class="bg-white p-4 rounded shadow-2xl relative" style="width: 800px; height: 500px;">
+            <button onclick="closeModal('modal2')" class="absolute top-2 right-4 text-2xl font-bold">&times;</button>
+            <h3 class="font-bold mb-4 border-b">Gallery</h3>
+            <div id="modal2Grid" class="flex flex-wrap gap-2 overflow-auto h-[410px] content-start"></div>
+        </div>
+    </div>
+
+    <div id="globalGallery" class="hidden fixed inset-0 modal-overlay z-[70] flex items-center justify-center">
+        <div class="bg-white w-full h-full p-6 overflow-auto">
+            <div class="flex justify-between items-center mb-4"><h2 class="text-xl font-bold">Batch Gallery</h2><button onclick="closeModal('globalGallery')" class="text-4xl">&times;</button></div>
+            <div id="globalGalleryGrid" class="flex flex-wrap gap-4 justify-center"></div>
+        </div>
+    </div>
+
+    <script>
+        let allData = [], filteredData = [], currentPage = 1, pageSize = 10, viewMode = 'table', filters = { branch: 'ALL', month: 'ALL', alpha: 'ALL' };
+
+        window.onload = () => {
+            Papa.parse("CEG_1977_Master.csv", {
+                download: true, header: true, skipEmptyLines: true,
+                complete: (r) => { allData = r.data; filteredData = [...allData]; initFilters(); render(); }
+            });
+        };
+
+        function initFilters() {
+            const branches = ['ALL', ...new Set(allData.map(d => d.Branch_name).filter(Boolean))];
+            document.getElementById('branchContainer').innerHTML = branches.map(b => `<button onclick="setFilter('branch', '${b}')" class="filter-btn" id="br-${b}">${b}</button>`).join('');
+            updateDynamicFilters();
+        }
+
+        function updateDynamicFilters() {
+            const monthsOrder = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            const availMonths = [...new Set(filteredData.map(d => d.Date_of_birth?.split('-')[1]))];
+            document.getElementById('monthContainer').innerHTML = `<button onclick="setFilter('month', 'ALL')" class="filter-btn" id="mo-ALL">ALL</button>` + 
+                monthsOrder.filter(m => availMonths.includes(m)).map(m => `<button onclick="setFilter('month', '${m}')" class="filter-btn" id="mo-${m}">${m}</button>`).join('');
+
+            const availAlphas = [...new Set(filteredData.map(d => d.Name_of_student?.charAt(0).toUpperCase()))].sort();
+            document.getElementById('alphaContainer').innerHTML = `<button onclick="setFilter('alpha', 'ALL')" class="filter-btn" id="al-ALL">ALL</button>` + 
+                availAlphas.map(a => `<button onclick="setFilter('alpha', '${a}')" class="filter-btn" id="al-${a}">${a}</button>`).join('');
+            highlight();
+        }
+
+        function setFilter(t, v) { filters[t] = v; applyFilters(); }
+        function applyFilters() {
+            const s = document.getElementById('searchInput').value.toLowerCase();
+            filteredData = allData.filter(i => {
+                const b = filters.branch === 'ALL' || i.Branch_name === filters.branch;
+                const m = filters.month === 'ALL' || i.Date_of_birth?.includes(filters.month);
+                const a = filters.alpha === 'ALL' || i.Name_of_student?.toUpperCase().startsWith(filters.alpha);
+                const search = Object.values(i).some(v => String(v).toLowerCase().includes(s));
+                return b && m && a && search;
+            });
+            currentPage = 1; updateDynamicFilters(); render();
+        }
+
+        function highlight() {
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('filter-active'));
+            document.getElementById(`br-${filters.branch}`)?.classList.add('filter-active');
+            document.getElementById(`mo-${filters.month}`)?.classList.add('filter-active');
+            document.getElementById(`al-${filters.alpha}`)?.classList.add('filter-active');
+            document.getElementById('recordCount').innerText = filteredData.length;
+        }
+
+        // Helper to create original size image with silhouette fallback
+        function createImgHtml(path, className = "") {
+            return `
+                <div class="img-container ${className}">
+                    <img src="${path}" class="img-orig" onerror="this.style.display='none'">
+                </div>`;
+        }
+
+        function render() {
+            const start = (currentPage - 1) * pageSize;
+            const pageData = filteredData.slice(start, start + parseInt(pageSize));
+
+            document.getElementById('tableBody').innerHTML = pageData.map(row => `
+                <tr class="hover:bg-gray-50 border-b">
+                    <td class="p-2">${row.Name_of_student}</td><td class="p-2">${row.Branch_name}</td><td class="p-2">${row.Date_of_birth}</td>
+                    <td class="p-2 text-blue-600">${row.Email_address}</td><td class="p-2">${row.Phone_numbers}</td>
+                    <td class="p-2"><button onclick="viewDetails('${row.Name_of_student}')" class="text-blue-600 font-bold">View</button></td>
+                </tr>`).join('');
+
+            document.getElementById('cardGrid').innerHTML = pageData.map(row => `
+                <div class="bg-white border p-3 rounded shadow-sm">
+                    <div class="flex gap-1 mb-2 h-24 overflow-hidden">
+                        ${createImgHtml(`individual_pics/${row.Name_of_student}-1977.jpeg`, "h-full w-24")}
+                        ${createImgHtml(`individual_pics/${row.Name_of_student}-2020.jpeg`, "h-full w-24")}
+                        ${createImgHtml(`individual_pics/${row.Name_of_student}-2027.jpeg`, "h-full w-24")}
+                    </div>
+                    <p class="font-bold">${row.Name_of_student}</p>
+                    <p>${row.Branch_name}</p><p>DOB: ${row.Date_of_birth}</p><p class="text-blue-600 truncate">${row.Email_address}</p><p>${row.Phone_numbers}</p>
+                    <div class="flex gap-2 mt-2">
+                        <button onclick="viewDetails('${row.Name_of_student}')" class="bg-blue-600 text-white px-2 py-1 rounded text-xs">View</button>
+                        <div id="btn-gal-${row.Name_of_student.replace(/\s/g,'')}"></div>
+                    </div>
+                </div>`).join('');
+
+            pageData.forEach(r => checkPersonalGalleryBtn(r.Name_of_student));
+            updatePagination();
+        }
+
+        function checkPersonalGalleryBtn(name) {
+            const img = new Image();
+            img.onload = () => {
+                const btn = `<button onclick="viewPersonalGallery('${name}')" class="bg-amber-500 text-white px-2 py-1 rounded text-xs">Show Pictures</button>`;
+                const el = document.getElementById(`btn-gal-${name.replace(/\s/g,'')}`);
+                if(el) el.innerHTML = btn;
+            };
+            img.src = `group_pics/${name}-1.jpeg`;
+        }
+
+        function viewDetails(name) {
+            const s = allData.find(x => x.Name_of_student === name);
+            if(!s) return;
+            document.getElementById('modal1Images').innerHTML = 
+                createImgHtml(`individual_pics/${name}-1977.jpeg`) + 
+                createImgHtml(`individual_pics/${name}-2020.jpeg`) + 
+                createImgHtml(`individual_pics/${name}-2027.jpeg`);
+
+            document.getElementById('modal1Content').innerHTML = Object.entries(s).map(([k, v]) => {
+                const b = (k === 'Name_of_student' || k === 'Branch_name') ? 'font-bold' : '';
+                return `<div><span class="text-gray-500 font-semibold w-48 inline-block">${k.replace(/_/g,' ')}:</span> <span class="${b}">${v}</span></div>`;
+            }).join('');
+
+            const picBtnArea = document.getElementById('modal1PicBtn');
+            picBtnArea.innerHTML = '';
+            const img = new Image();
+            img.onload = () => { picBtnArea.innerHTML = `<button onclick="viewPersonalGallery('${name}')" class="bg-amber-500 text-white px-4 py-1 rounded">Show Pictures</button>`; };
+            img.src = `group_pics/${name}-1.jpeg`;
+
+            document.getElementById('modal1').classList.remove('hidden');
+        }
+
+        function viewPersonalGallery(name) {
+            const grid = document.getElementById('modal2Grid'); grid.innerHTML = '';
+            for(let i=1; i<=25; i++) {
+                const img = new Image(); img.src = `group_pics/${name}-${i}.jpeg`;
+                img.className = "img-orig h-32 border"; img.onerror = () => img.remove();
+                img.onload = () => grid.appendChild(img);
+            }
+            document.getElementById('modal2').classList.remove('hidden');
+        }
+
+        function openGlobalGallery() {
+            const grid = document.getElementById('globalGalleryGrid'); grid.innerHTML = '';
+            for(let i=1; i<=100; i++) {
+                const img = new Image(); img.src = `group_pics/group-${i}.jpeg`;
+                img.className = "img-orig h-48 border"; img.onerror = () => img.remove();
+                img.onload = () => grid.appendChild(img);
+            }
+            document.getElementById('globalGallery').classList.remove('hidden');
+        }
+
+        function toggleViewMode() {
+            viewMode = viewMode === 'table' ? 'card' : 'table';
+            document.getElementById('tableView').classList.toggle('hidden', viewMode === 'card');
+            document.getElementById('cardGrid').classList.toggle('hidden', viewMode === 'table');
+            document.getElementById('viewModeBtn').innerText = viewMode === 'table' ? 'Show Card View' : 'Show Table View';
+        }
+
+        function clearFilters() { filters = { branch: 'ALL', month: 'ALL', alpha: 'ALL' }; document.getElementById('searchInput').value = ''; applyFilters(); }
+        function updatePagination() {
+            const max = Math.ceil(filteredData.length / pageSize) || 1;
+            document.getElementById('pageInfo').innerText = `Page ${currentPage} of ${max}`;
+            document.getElementById('prevBtn').disabled = currentPage === 1;
+            document.getElementById('nextBtn').disabled = currentPage >= max;
+        }
+        function nextPage() { currentPage++; render(); }
+        function prevPage() { currentPage--; render(); }
+        function changePageSize() { pageSize = document.getElementById('pageSize').value; currentPage = 1; render(); }
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+    </script>
+</body>
+</html>
