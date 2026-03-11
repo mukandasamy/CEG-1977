@@ -6,16 +6,26 @@
 
 <style>
 
+:root{
+--primary:#1e40af;
+--border:#e5e7eb;
+--bg:#f8fafc;
+}
+
 body{
-font-family:Arial, Helvetica, sans-serif;
+font-family:Arial,Helvetica,sans-serif;
 font-size:14px;
-margin:10px;
+margin:12px;
+background:white;
+color:#111;
 }
 
 header{
 display:flex;
 align-items:center;
-gap:15px;
+gap:14px;
+border-bottom:1px solid var(--border);
+padding-bottom:8px;
 }
 
 header img{
@@ -24,81 +34,93 @@ height:70px;
 
 h1{
 margin:0;
-font-size:24px;
+font-size:22px;
+font-weight:600;
 }
 
 #search{
 margin-left:auto;
-padding:6px;
-width:220px;
+padding:6px 8px;
+border:1px solid var(--border);
+border-radius:4px;
+width:240px;
 }
 
 button{
+background:var(--primary);
+color:white;
+border:none;
 padding:6px 10px;
+border-radius:4px;
 cursor:pointer;
 }
 
+button:hover{
+opacity:.9;
+}
+
 #filters{
-margin-top:10px;
+margin-top:12px;
 display:flex;
-gap:10px;
 align-items:center;
+gap:10px;
 }
 
 #filters select{
-background:#007BFF;
+padding:6px;
+background:#2563eb;
 color:white;
 border:none;
-padding:5px;
+border-radius:4px;
 }
 
 #recordCount{
 margin-left:auto;
+color:#444;
 }
 
 table{
 width:100%;
 border-collapse:collapse;
-margin-top:10px;
-}
-
-thead{
-position:sticky;
-top:0;
-background:#f0f0f0;
+margin-top:12px;
 }
 
 th,td{
-border:1px solid #ddd;
+border:1px solid var(--border);
 padding:6px;
-text-align:left;
 }
 
-.cardContainer{
-display:flex;
-flex-wrap:wrap;
-gap:15px;
-margin-top:10px;
+thead{
+background:#f1f5f9;
+position:sticky;
+top:0;
+}
+
+.cardGrid{
+display:grid;
+grid-template-columns:repeat(auto-fill,minmax(320px,1fr));
+gap:14px;
+margin-top:14px;
 }
 
 .card{
-border:1px solid #ccc;
+border:1px solid var(--border);
+border-radius:6px;
 padding:8px;
+background:white;
 }
 
-.card img{
-margin-right:5px;
+.cardImages{
+display:flex;
+gap:6px;
+margin-bottom:6px;
 }
 
 .gallery{
-display:flex;
-flex-wrap:wrap;
-gap:10px;
-margin-top:10px;
-}
-
-.gallery img{
-display:block;
+display:grid;
+grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+gap:12px;
+margin-top:20px;
 }
 
 .modal{
@@ -108,22 +130,23 @@ top:0;
 left:0;
 width:100%;
 height:100%;
-background:rgba(0,0,0,0.6);
+background:rgba(0,0,0,.55);
 }
 
 .modalContent{
 background:white;
 margin:40px auto;
-padding:15px;
-width:80%;
+padding:18px;
+width:85%;
 max-height:85%;
 overflow:auto;
+border-radius:6px;
 }
 
 .modalImages{
 display:flex;
 gap:10px;
-margin-bottom:10px;
+margin-bottom:12px;
 }
 
 .footer{
@@ -131,6 +154,10 @@ margin-top:10px;
 display:flex;
 align-items:center;
 gap:10px;
+}
+
+.footer select{
+padding:5px;
 }
 
 </style>
@@ -146,7 +173,7 @@ gap:10px;
 
 <button onclick="openGallery()">Gallery</button>
 
-<input id="search" placeholder="Search directory...">
+<input id="search" placeholder="Search name, branch, company, phone...">
 
 </header>
 
@@ -154,9 +181,7 @@ gap:10px;
 <div id="filters">
 
 <select id="branchFilter"></select>
-
 <select id="monthFilter"></select>
-
 <select id="alphaFilter"></select>
 
 <button onclick="clearFilters()">Clear Filters</button>
@@ -169,7 +194,6 @@ gap:10px;
 
 
 <div id="tableView"></div>
-
 <div id="cardView" style="display:none"></div>
 
 
@@ -182,11 +206,11 @@ gap:10px;
 <option>100</option>
 </select>
 
-<button id="prevBtn">Prev</button>
+<button onclick="prevPage()">Prev</button>
 
 <span id="pageInfo"></span>
 
-<button id="nextBtn">Next</button>
+<button onclick="nextPage()">Next</button>
 
 </div>
 
@@ -195,11 +219,9 @@ gap:10px;
 <div class="modalContent" id="modalBody"></div>
 </div>
 
-
 <div id="modal2" class="modal">
 <div class="modalContent" id="groupPics"></div>
 </div>
-
 
 <div id="galleryPage" style="display:none"></div>
 
@@ -213,9 +235,10 @@ let filtered=[]
 let page=1
 let cardMode=false
 
-const months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
+const monthOrder=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
 
 const placeholder="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEyMCIgdmlld0JveD0iMCAwIDEwMCAxMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwMCIgaGVpZ2h0PSIxMjAiIGZpbGw9IiNlZWUiLz48Y2lyY2xlIGN4PSI1MCIgY3k9IjM1IiByPSIyMCIgZmlsbD0iI2NjYyIvPjxyZWN0IHg9IjIwIiB5PSI2NSIgd2lkdGg9IjYwIiBoZWlnaHQ9IjM1IiBmaWxsPSIjY2NjIi8+PC9zdmc+"
+
 
 function encodeName(name){
 return encodeURIComponent(name)
@@ -224,12 +247,13 @@ return encodeURIComponent(name)
 async function loadData(){
 
 const res=await fetch(url)
-data=await res.json()
+let json=await res.json()
+
+data=Array.isArray(json)?json:(json.data||[])
 
 filtered=[...data]
 
 initFilters()
-
 render()
 
 }
@@ -238,59 +262,38 @@ function initFilters(){
 
 const branches=[...new Set(data.map(d=>d.Branch))].sort()
 
-const branchSel=document.getElementById("branchFilter")
+branchFilter.innerHTML="<option value='ALL'>All Branches</option>"
+branches.forEach(b=>branchFilter.innerHTML+=`<option>${b}</option>`)
 
-branchSel.innerHTML="<option value='ALL'>All Branches</option>"
+const months=[...new Set(data.map(d=>d.Date_of_birth.split("-")[1]))]
 
-branches.forEach(b=>{
-branchSel.innerHTML+=`<option>${b}</option>`
-})
+months.sort((a,b)=>monthOrder.indexOf(a)-monthOrder.indexOf(b))
 
-const monthsPresent=[...new Set(data.map(d=>d.Date_of_birth.split("-")[1]))]
+monthFilter.innerHTML="<option value='ALL'>All Months</option>"
+months.forEach(m=>monthFilter.innerHTML+=`<option>${m}</option>`)
 
-monthsPresent.sort((a,b)=>months.indexOf(a)-months.indexOf(b))
+const letters=[...new Set(data.map(d=>d.Name[0].toUpperCase()))].sort()
 
-const monthSel=document.getElementById("monthFilter")
-
-monthSel.innerHTML="<option value='ALL'>All Months</option>"
-
-monthsPresent.forEach(m=>{
-monthSel.innerHTML+=`<option>${m}</option>`
-})
-
-const alpha=[...new Set(data.map(d=>d.Name[0].toUpperCase()))].sort()
-
-const alphaSel=document.getElementById("alphaFilter")
-
-alphaSel.innerHTML="<option value='ALL'>All Letters</option>"
-
-alpha.forEach(a=>{
-alphaSel.innerHTML+=`<option>${a}</option>`
-})
+alphaFilter.innerHTML="<option value='ALL'>All Letters</option>"
+letters.forEach(a=>alphaFilter.innerHTML+=`<option>${a}</option>`)
 
 }
 
-document.getElementById("branchFilter").onchange=applyFilters
-document.getElementById("monthFilter").onchange=applyFilters
-document.getElementById("alphaFilter").onchange=applyFilters
-document.getElementById("search").oninput=applyFilters
-
 function applyFilters(){
 
-const b=document.getElementById("branchFilter").value
-const m=document.getElementById("monthFilter").value
-const a=document.getElementById("alphaFilter").value
-const s=document.getElementById("search").value.toLowerCase()
+const b=branchFilter.value
+const m=monthFilter.value
+const a=alphaFilter.value
+const s=search.value.toLowerCase()
 
 filtered=data.filter(d=>{
 
 if(b!=="ALL" && d.Branch!==b) return false
-
 if(m!=="ALL" && d.Date_of_birth.split("-")[1]!==m) return false
-
 if(a!=="ALL" && d.Name[0].toUpperCase()!==a) return false
 
-if(s && !JSON.stringify(d).toLowerCase().includes(s)) return false
+if(s && !Object.values(d).join(" ").toLowerCase().includes(s))
+return false
 
 return true
 
@@ -301,12 +304,17 @@ render()
 
 }
 
+branchFilter.onchange=applyFilters
+monthFilter.onchange=applyFilters
+alphaFilter.onchange=applyFilters
+search.oninput=applyFilters
+
 function clearFilters(){
 
-document.getElementById("branchFilter").value="ALL"
-document.getElementById("monthFilter").value="ALL"
-document.getElementById("alphaFilter").value="ALL"
-document.getElementById("search").value=""
+branchFilter.value="ALL"
+monthFilter.value="ALL"
+alphaFilter.value="ALL"
+search.value=""
 
 filtered=[...data]
 
@@ -314,83 +322,86 @@ render()
 
 }
 
+function pageSize(){
+return parseInt(document.getElementById("pageSize").value)
+}
+
+function paginate(){
+
+const start=(page-1)*pageSize()
+return filtered.slice(start,start+pageSize())
+
+}
+
 function render(){
 
-document.getElementById("recordCount").innerText=filtered.length+" records"
+recordCount.innerText=filtered.length+" records"
 
 if(cardMode) renderCards()
 else renderTable()
 
-}
-
-function paginate(arr){
-
-const size=parseInt(document.getElementById("pageSize").value)
-
-const start=(page-1)*size
-
-return arr.slice(start,start+size)
+updatePagination()
 
 }
 
 function renderTable(){
 
-const rows=paginate(filtered)
+const rows=paginate()
 
 let html="<table><thead><tr><th>Name</th><th>Branch</th><th>DOB</th><th>Email</th><th>Phone</th><th>Action</th></tr></thead><tbody>"
 
 rows.forEach((r,i)=>{
 
-html+=`<tr>
+const index=(page-1)*pageSize()+i
+
+html+=`
+<tr>
 <td>${r.Name}</td>
 <td>${r.Branch}</td>
 <td>${r.Date_of_birth}</td>
-<td>${r.Email_address}</td>
-<td>${r.Phone_numbers}</td>
-<td><button onclick="showDetails(${(page-1)*10+i})">View Details</button></td>
-</tr>`
+<td>${r.Email_address||""}</td>
+<td>${r.Phone_numbers||""}</td>
+<td><button onclick="showDetails(${index})">View Details</button></td>
+</tr>
+`
 
 })
 
 html+="</tbody></table>"
 
-document.getElementById("tableView").innerHTML=html
+tableView.innerHTML=html
 
 }
 
 function renderCards(){
 
-const rows=paginate(filtered)
+const rows=paginate()
 
-let html="<div class='cardContainer'>"
+let html="<div class='cardGrid'>"
 
 rows.forEach((r,i)=>{
 
+const index=(page-1)*pageSize()+i
+
 html+=`
 
-<div class='card'>
+<div class="card">
 
-<div>
+<div class="cardImages">
 
 <img src="individual_pics/${encodeName(r.Name)}-1977.jpeg" onerror="this.src='${placeholder}'">
-
 <img src="individual_pics/${encodeName(r.Name)}-2020.jpeg" onerror="this.src='${placeholder}'">
-
 <img src="individual_pics/${encodeName(r.Name)}-2027.jpeg" onerror="this.src='${placeholder}'">
 
 </div>
 
 <b>${r.Name}</b><br>
-
 ${r.Branch}<br>
-
 ${r.Date_of_birth}<br>
+${r.Email_address||""}<br>
+${r.Phone_numbers||""}<br>
 
-${r.Email_address}<br>
-
-${r.Phone_numbers}<br>
-
-<button onclick="showDetails(${(page-1)*10+i})">View Details</button>
+<button onclick="showDetails(${index})">View Details</button>
 
 </div>`
 
@@ -398,7 +409,7 @@ ${r.Phone_numbers}<br>
 
 html+="</div>"
 
-document.getElementById("cardView").innerHTML=html
+cardView.innerHTML=html
 
 }
 
@@ -406,11 +417,32 @@ function toggleView(){
 
 cardMode=!cardMode
 
-document.getElementById("tableView").style.display=cardMode?"none":"block"
-
-document.getElementById("cardView").style.display=cardMode?"block":"none"
+tableView.style.display=cardMode?"none":"block"
+cardView.style.display=cardMode?"block":"none"
 
 render()
+
+}
+
+function updatePagination(){
+
+const total=Math.ceil(filtered.length/pageSize())
+
+pageInfo.innerText="Page "+page+" / "+(total||1)
+
+}
+
+function prevPage(){
+
+if(page>1){page--;render()}
+
+}
+
+function nextPage(){
+
+const total=Math.ceil(filtered.length/pageSize())
+
+if(page<total){page++;render()}
 
 }
 
@@ -423,26 +455,25 @@ let html=`
 <div class="modalImages">
 
 <img src="individual_pics/${encodeName(r.Name)}-1977.jpeg" onerror="this.src='${placeholder}'">
-
 <img src="individual_pics/${encodeName(r.Name)}-2020.jpeg" onerror="this.src='${placeholder}'">
-
 <img src="individual_pics/${encodeName(r.Name)}-2027.jpeg" onerror="this.src='${placeholder}'">
 
 </div>
 `
 
-for(let k in r){
+for(const k in r){
 
-if(k==="Name"||k==="Branch") html+=`<b>${k}: ${r[k]}</b><br>`
-else html+=`${k}: ${r[k]}<br>`
+if(k==="Name"||k==="Branch")
+html+=`<b>${k}: ${r[k]}</b><br>`
+else
+html+=`${k}: ${r[k]||""}<br>`
 
 }
 
 html+=`<br><button onclick="showGroup('${encodeName(r.Name)}')">Show More Pictures</button>`
 
-document.getElementById("modalBody").innerHTML=html
-
-document.getElementById("modal1").style.display="block"
+modalBody.innerHTML=html
+modal1.style.display="block"
 
 }
 
@@ -456,9 +487,8 @@ html+=`<img src="group_pics/${name}-${i}.jpeg" onerror="this.style.display='none
 
 }
 
-document.getElementById("groupPics").innerHTML=html
-
-document.getElementById("modal2").style.display="block"
+groupPics.innerHTML=html
+modal2.style.display="block"
 
 }
 
@@ -474,14 +504,15 @@ html+=`<img src="group_pics/group-${i}.jpeg" onerror="this.style.display='none'"
 
 html+="</div>"
 
-document.getElementById("galleryPage").innerHTML=html
-document.getElementById("galleryPage").style.display="block"
+galleryPage.innerHTML=html
+galleryPage.style.display="block"
 
 }
 
 window.onclick=function(e){
 
-if(e.target.className==="modal") e.target.style.display="none"
+if(e.target.classList.contains("modal"))
+e.target.style.display="none"
 
 }
 
