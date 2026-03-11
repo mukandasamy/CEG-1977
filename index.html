@@ -42,20 +42,20 @@ const app = {
         const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
         return `${d.getDate().toString().padStart(2, '0')}-${months[d.getMonth()]}`;
     },
-    async init() {
-        const res = await fetch('https://script.google.com/macros/s/AKfycbyYMhxBdpR0z92oBljcE_QRjF_ZqKA8asjiviXkXG6sPXzVh3j9npVisxqtNZBsCgHyBg/exec');
-        this.data = await res.json();
+async function init() {
+    try {
+        const response = await fetch('https://script.google.com/macros/s/AKfycbyYMhxBdpR0z92oBljcE_QRjF_ZqKA8asjiviXkXG6sPXzVh3j9npVisxqtNZBsCgHyBg/exec');
+        const data = await response.json();
         
-        // Debug: Log the first record to verify field names
-        console.log("Data structure sample:", this.data[0]);
+        // CRITICAL: Look at the console (F12) to see exactly what your data looks like
+        console.log("--- RAW DATA KEYS ---");
+        console.log("Keys found in first row:", Object.keys(data[0]));
+        console.log("First row object:", data[0]);
 
-        // Populate Filters using 'Branch'
-        const branches = [...new Set(this.data.map(d => d.Branch))].filter(Boolean);
-        const select = document.getElementById('branchFilter');
-        branches.forEach(b => select.innerHTML += `<option value="${b}">${b}</option>`);
-        
+        this.data = data;
         this.render();
-    },
+    } catch (e) { console.error("Error:", e); }
+}
     render() {
         const tbody = document.getElementById('tableBody');
         const branch = document.getElementById('branchFilter').value;
