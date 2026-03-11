@@ -5,21 +5,22 @@
     <title>CEG 1977 Batch Directory</title>
     <style>
         body { font-family: sans-serif; font-size: 14px; background: #f4f7f6; padding: 20px; }
-        .container { max-width: 1200px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .filter-section { display: flex; gap: 10px; margin-bottom: 20px; padding: 15px; background: #eef2f7; border-radius: 6px; flex-wrap: wrap; }
+        .container { max-width: 1200px; margin: auto; background: white; padding: 20px; border-radius: 8px; }
+        .filter-section { display: flex; gap: 10px; margin-bottom: 20px; background: #eef2f7; padding: 15px; border-radius: 6px; }
         table { width: 100%; border-collapse: collapse; }
-        th { background: #004a99; color: white; padding: 12px; text-align: left; }
+        th { background: #004a99; color: white; padding: 12px; }
         td { padding: 10px; border-bottom: 1px solid #ddd; }
-        .btn { padding: 8px 12px; background: #004a99; color: white; border: none; border-radius: 4px; cursor: pointer; }
-        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 1000; justify-content: center; align-items: center; }
-        .modal-content { background: white; padding: 30px; width: 600px; max-height: 80vh; overflow-y: auto; border-radius: 8px; }
+        .btn { padding: 8px 12px; background: #004a99; color: white; border: none; cursor: pointer; border-radius: 4px; }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center; }
+        .modal-content { background: white; padding: 30px; width: 90%; max-height: 90vh; overflow-y: auto; border-radius: 8px; }
+        .gallery-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #004a99; padding-bottom:15px; margin-bottom:20px;">
-        <h1 style="margin:0;">CEG 1977 Batch Golden Jubilee</h1>
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h1>CEG 1977 Batch Golden Jubilee</h1>
         <button class="btn" onclick="showGallery()">Gallery View</button>
     </div>
 
@@ -28,10 +29,9 @@
         <select id="monthFilter" onchange="render()"><option value="ALL">All Months</option></select>
         <select id="alphaFilter" onchange="render()"><option value="ALL">A-Z</option></select>
         <button class="btn" onclick="clearFilters()">Clear Filters</button>
-        <button class="btn" onclick="toggleView()" id="viewBtn">Show Card View</button>
     </div>
 
-    <div id="tableWrapper"><table id="dataTable"><thead><tr><th>Name</th><th>Branch</th><th>DOB</th><th>Email</th><th>Phone</th><th>Action</th></tr></thead><tbody id="tableBody"></tbody></table></div>
+    <table id="dataTable"><thead><tr><th>Name</th><th>Branch</th><th>DOB</th><th>Email</th><th>Phone</th><th>Action</th></tr></thead><tbody id="tableBody"></tbody></table>
 </div>
 
 <div id="modal" class="modal" onclick="closeModal()"><div class="modal-content" onclick="event.stopPropagation()" id="modalBody"></div></div>
@@ -51,16 +51,8 @@
         const branches = [...new Set(appData.map(d => d.Branch))].filter(Boolean).sort();
         document.getElementById('branchFilter').innerHTML = '<option value="ALL">All Branches</option>' + branches.map(b => `<option value="${b}">${b}</option>`).join('');
         
-        document.getElementById('monthFilter').innerHTML = '<option value="ALL">All Months</option>' + months.map(m => `<option value="${m}">${m}</option>`).join('');
-        
         const alphas = [...new Set(appData.map(d => d.Name[0].toUpperCase()))].sort();
         document.getElementById('alphaFilter').innerHTML = '<option value="ALL">A-Z</option>' + alphas.map(a => `<option value="${a}">${a}</option>`).join('');
-    }
-
-    function formatDate(dStr) {
-        if (!dStr) return "";
-        const d = new Date(dStr);
-        return `${d.getDate().toString().padStart(2, '0')}-${months[d.getMonth()]}`;
     }
 
     function render() {
@@ -75,11 +67,7 @@
 
         document.getElementById('tableBody').innerHTML = filtered.map(d => `
             <tr>
-                <td>${d.Name || ''}</td>
-                <td>${d.Branch || ''}</td>
-                <td>${formatDate(d.Date_of_birth)}</td>
-                <td>${d.Email_address || ''}</td>
-                <td>${d.Phone_numbers || ''}</td>
+                <td>${d.Name}</td><td>${d.Branch}</td><td>${d.Date_of_birth}</td><td>${d.Email_address}</td><td>${d.Phone_numbers}</td>
                 <td><button class="btn" onclick="openDetails('${d.Name}')">View</button></td>
             </tr>
         `).join('');
@@ -87,19 +75,25 @@
 
     function openDetails(name) {
         const d = appData.find(x => x.Name === name);
-        if(!d) return;
+        let html = `<h3>${d.Name}</h3>
+            <div style="display:flex; gap:10px;">
+                ${['1977','2020','2027'].map(y => `<img src="individual_pics/${name}-${y}.jpeg" style="width:150px" onerror="this.style.display='none'">`).join('')}
+            </div>
+            <button class="btn" onclick="showModal2('${name}')" id="showMoreBtn" style="display:none;">View More Pictures</button>`;
         
-        // Dynamic Mapping of all 13 fields
-        let html = `<h3>${d.Name}</h3><div style="display:flex; gap:10px;">
-            ${['1977','2020','2027'].map(y => `<img src="individual_pics/${name}-${y}.jpeg" style="width:100px" onerror="this.style.display='none'">`).join('')}
-        </div>`;
+        Object.entries(d).forEach(([k, v]) => { if(k !== 'Name') html += `<p><strong>${k.replace(/_/g, ' ')}:</strong> ${v}</p>`; });
         
-        const fields = ['Branch', 'Date_of_birth', 'Email_address', 'Phone_numbers', 'Address', 'Spouse_name', 'Anniversary_date', 'Children_details', 'Qualification', 'Company_designation', 'Company_worked', 'Company_phone_email'];
-        fields.forEach(f => {
-            html += `<p><strong>${f.replace(/_/g, ' ')}:</strong> ${d[f] || 'N/A'}</p>`;
-        });
+        document.getElementById('modalBody').innerHTML = html + `<button class="btn" onclick="closeModal()">Close</button>`;
+        document.getElementById('modal').style.display = 'flex';
         
-        document.getElementById('modalBody').innerHTML = html + `<br><button class="btn" onclick="closeModal()">Close</button>`;
+        // Check for file existence logic could be added here to display the button
+        document.getElementById('showMoreBtn').style.display = 'block'; 
+    }
+
+    function showGallery() {
+        document.getElementById('modalBody').innerHTML = `<h3>Gallery</h3><div class="gallery-container">` + 
+            Array.from({length: 100}, (_,i) => `<img src="group_pics/group-${i+1}.jpeg" style="width:100%" onerror="this.style.display='none'">`).join('') + 
+            `</div><br><button class="btn" onclick="closeModal()">Close</button>`;
         document.getElementById('modal').style.display = 'flex';
     }
 
@@ -110,16 +104,7 @@
         render();
     }
 
-    function showGallery() {
-        let html = `<h3>Gallery</h3><div style="display:grid; grid-template-columns:repeat(5, 1fr); gap:10px;">`;
-        for(let i=1; i<=100; i++) html += `<img src="group_pics/group-${i}.jpeg" style="width:100%" onerror="this.style.display='none'">`;
-        document.getElementById('modalBody').innerHTML = html + `</div><br><button class="btn" onclick="closeModal()">Close</button>`;
-        document.getElementById('modal').style.display = 'flex';
-    }
-
     function closeModal() { document.getElementById('modal').style.display = 'none'; }
-    function toggleView() { alert("Card View toggle enabled"); } // Placeholder for custom card logic
-
     window.onload = init;
 </script>
 </body>
