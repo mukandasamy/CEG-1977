@@ -14,7 +14,7 @@
 body{
 font-family:Arial,Helvetica,sans-serif;
 font-size:14px;
-margin:12px;
+margin:14px;
 }
 
 header{
@@ -44,8 +44,9 @@ border-radius:4px;
 cursor:pointer;
 }
 
-button:hover{
-opacity:.9;
+button:disabled{
+opacity:.4;
+cursor:default;
 }
 
 #search{
@@ -147,21 +148,10 @@ font-size:22px;
 cursor:pointer;
 }
 
-.modalImages{
-display:flex;
-gap:10px;
-margin-bottom:12px;
-}
-
 .galleryGrid{
-display:flex;
-flex-wrap:wrap;
-gap:12px;
-align-items:flex-start;
-}
-
-.galleryGrid img{
-display:block;
+display:grid;
+grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
+gap:14px;
 }
 
 </style>
@@ -181,9 +171,7 @@ display:block;
 
 </header>
 
-
 <div id="loadingMessage">Loading directory...</div>
-
 
 <div id="filters" style="display:none">
 
@@ -192,16 +180,14 @@ display:block;
 <select id="alphaFilter"></select>
 
 <button onclick="clearFilters()">Clear Filters</button>
-<button onclick="toggleView()">Show Card View</button>
+<button id="viewBtn" onclick="toggleView()">Show Card View</button>
 
 <div id="recordCount"></div>
 
 </div>
 
-
 <div id="tableView"></div>
 <div id="cardView" style="display:none"></div>
-
 
 <div class="footer">
 
@@ -212,56 +198,27 @@ display:block;
 <option>100</option>
 </select>
 
-<button onclick="prevPage()">Prev</button>
+<button id="prevBtn" onclick="prevPage()">Prev</button>
 
 <span id="pageInfo"></span>
 
-<button onclick="nextPage()">Next</button>
+<button id="nextBtn" onclick="nextPage()">Next</button>
 
 </div>
-
-
-<div id="modal1" class="modal">
-<div class="modalContent">
-
-<span class="closeX" onclick="modal1.style.display='none'">×</span>
-
-<div id="modalBody"></div>
-
-<button onclick="modal1.style.display='none'">Close</button>
-
-</div>
-</div>
-
-
-<div id="modal2" class="modal">
-<div class="modalContent">
-
-<span class="closeX" onclick="modal2.style.display='none'">×</span>
-
-<div id="groupPics"></div>
-
-<button onclick="modal2.style.display='none'">Close</button>
-
-</div>
-</div>
-
 
 <div id="galleryModal" class="modal">
 <div class="modalContent">
 
 <span class="closeX" onclick="closeGallery()">×</span>
 
-<button onclick="closeGallery()">Close Gallery</button>
-
-<br><br>
+<h3>Gallery</h3>
 
 <div id="galleryGrid" class="galleryGrid"></div>
 
+<button onclick="closeGallery()">Close</button>
+
 </div>
 </div>
-
-
 
 <script>
 
@@ -279,9 +236,15 @@ return encodeURIComponent(n)
 }
 
 function formatDOB(d){
+
 if(!d) return ""
-const p=d.split("-")
-return p[0]+"-"+p[1]
+
+let parts=d.split("-")
+
+let dd=parts[0]
+let mmm=parts[1]
+
+return dd+"-"+mmm
 }
 
 async function loadData(){
@@ -319,9 +282,9 @@ monthsPresent.forEach(m=>monthFilter.innerHTML+=`<option>${m}</option>`)
 const letters=[...new Set(data.map(d=>d.Name[0].toUpperCase()))].sort()
 
 alphaFilter.innerHTML="<option value='ALL'>All Letters</option>"
-letters.forEach(a=>alphaFilter.innerHTML+=`<option>${a}</option>`)
+letters.forEach(a=>alphaFilter.innerHTML+=`<option>${a}</option>`
 
-}
+)}
 
 function applyFilters(){
 
@@ -335,6 +298,7 @@ filtered=data.filter(d=>{
 if(b!=="ALL" && d.Branch!==b) return false
 if(m!=="ALL" && d.Date_of_birth.split("-")[1]!==m) return false
 if(a!=="ALL" && d.Name[0].toUpperCase()!==a) return false
+
 if(s && !Object.values(d).join(" ").toLowerCase().includes(s)) return false
 
 return true
@@ -359,6 +323,8 @@ alphaFilter.value="ALL"
 search.value=""
 
 filtered=[...data]
+page=1
+
 render()
 
 }
@@ -367,9 +333,17 @@ function pageSize(){
 return parseInt(document.getElementById("pageSize").value)
 }
 
+pageSize.onchange=function(){
+page=1
+render()
+}
+
 function paginate(){
+
 const start=(page-1)*pageSize()
+
 return filtered.slice(start,start+pageSize())
+
 }
 
 function render(){
@@ -387,11 +361,9 @@ function renderTable(){
 
 const rows=paginate()
 
-let html="<table><thead><tr><th>Name</th><th>Branch</th><th>DOB</th><th>Email</th><th>Phone</th><th>Action</th></tr></thead><tbody>"
+let html="<table><thead><tr><th>Name</th><th>Branch</th><th>DOB</th><th>Email</th><th>Phone</th><th></th></tr></thead><tbody>"
 
-rows.forEach((r,i)=>{
-
-const index=(page-1)*pageSize()+i
+rows.forEach(r=>{
 
 html+=`
 <tr>
@@ -400,9 +372,8 @@ html+=`
 <td>${formatDOB(r.Date_of_birth)}</td>
 <td>${r.Email_address||""}</td>
 <td>${r.Phone_numbers||""}</td>
-<td><button onclick="showDetails(${index})">View Details</button></td>
-</tr>
-`
+<td></td>
+</tr>`
 
 })
 
@@ -418,9 +389,7 @@ const rows=paginate()
 
 let html="<div class='cardGrid'>"
 
-rows.forEach((r,i)=>{
-
-const index=(page-1)*pageSize()+i
+rows.forEach(r=>{
 
 html+=`
 
@@ -438,9 +407,7 @@ html+=`
 ${r.Branch}<br>
 ${formatDOB(r.Date_of_birth)}<br>
 ${r.Email_address||""}<br>
-${r.Phone_numbers||""}<br>
-
-<button onclick="showDetails(${index})">View Details</button>
+${r.Phone_numbers||""}
 
 </div>`
 
@@ -459,6 +426,8 @@ cardMode=!cardMode
 tableView.style.display=cardMode?"none":"block"
 cardView.style.display=cardMode?"block":"none"
 
+viewBtn.innerText=cardMode?"Show Table View":"Show Card View"
+
 render()
 
 }
@@ -469,60 +438,28 @@ const total=Math.ceil(filtered.length/pageSize())
 
 pageInfo.innerText="Page "+page+" / "+(total||1)
 
+prevBtn.disabled=page===1
+nextBtn.disabled=page===total || total===0
+
 }
 
 function prevPage(){
-if(page>1){page--;render()}
+
+if(page>1){
+page--
+render()
+}
+
 }
 
 function nextPage(){
+
 const total=Math.ceil(filtered.length/pageSize())
-if(page<total){page++;render()}
+
+if(page<total){
+page++
+render()
 }
-
-function showDetails(i){
-
-const r=filtered[i]
-
-let html=`
-
-<div class="modalImages">
-
-<img src="individual_pics/${encodeName(r.Name)}-1977.jpeg" onerror="this.style.display='none'">
-<img src="individual_pics/${encodeName(r.Name)}-2020.jpeg" onerror="this.style.display='none'">
-<img src="individual_pics/${encodeName(r.Name)}-2027.jpeg" onerror="this.style.display='none'">
-
-</div>
-`
-
-for(const k in r){
-
-if(k==="Name"||k==="Branch")
-html+=`<b>${k}: ${r[k]}</b><br>`
-else
-html+=`${k}: ${r[k]||""}<br>`
-
-}
-
-html+=`<br><button onclick="showGroup('${encodeName(r.Name)}')">Show More Pictures</button>`
-
-modalBody.innerHTML=html
-modal1.style.display="block"
-
-}
-
-function showGroup(name){
-
-let html=""
-
-for(let i=1;i<=25;i++){
-
-html+=`<img src="group_pics/${name}-${i}.jpeg" onerror="this.style.display='none'">`
-
-}
-
-groupPics.innerHTML=html
-modal2.style.display="block"
 
 }
 
@@ -542,7 +479,9 @@ galleryModal.style.display="block"
 }
 
 function closeGallery(){
+
 galleryModal.style.display="none"
+
 }
 
 window.onclick=function(e){
