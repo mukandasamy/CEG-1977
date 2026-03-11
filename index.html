@@ -7,7 +7,7 @@
 <style>
 
 :root{
---blue:#1d4ed8;
+--primary:#3b5fa0;
 --border:#e5e7eb;
 }
 
@@ -35,7 +35,7 @@ font-size:22px;
 }
 
 button{
-background:var(--blue);
+background:var(--primary);
 color:white;
 border:none;
 padding:8px 14px;
@@ -55,19 +55,23 @@ width:240px;
 border:1px solid var(--border);
 }
 
+#loadingMessage{
+font-size:18px;
+margin-top:25px;
+}
+
 #filters{
 display:flex;
 gap:10px;
 align-items:center;
-margin-top:10px;
+margin-top:12px;
 }
 
 #filters select{
-background:#2563eb;
+background:#4c6fb5;
 color:white;
 border:none;
 padding:6px;
-font-size:14px;
 }
 
 #recordCount{
@@ -134,6 +138,13 @@ padding:18px;
 width:85%;
 max-height:85%;
 overflow:auto;
+line-height:1.6;
+}
+
+.closeX{
+float:right;
+font-size:22px;
+cursor:pointer;
 }
 
 .modalImages{
@@ -143,9 +154,14 @@ margin-bottom:12px;
 }
 
 .galleryGrid{
-display:grid;
-grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+display:flex;
+flex-wrap:wrap;
 gap:12px;
+align-items:flex-start;
+}
+
+.galleryGrid img{
+display:block;
 }
 
 </style>
@@ -166,7 +182,10 @@ gap:12px;
 </header>
 
 
-<div id="filters">
+<div id="loadingMessage">Loading directory...</div>
+
+
+<div id="filters" style="display:none">
 
 <select id="branchFilter"></select>
 <select id="monthFilter"></select>
@@ -194,26 +213,48 @@ gap:12px;
 </select>
 
 <button onclick="prevPage()">Prev</button>
+
 <span id="pageInfo"></span>
+
 <button onclick="nextPage()">Next</button>
 
 </div>
 
 
 <div id="modal1" class="modal">
-<div class="modalContent" id="modalBody"></div>
+<div class="modalContent">
+
+<span class="closeX" onclick="modal1.style.display='none'">×</span>
+
+<div id="modalBody"></div>
+
+<button onclick="modal1.style.display='none'">Close</button>
+
+</div>
 </div>
 
 
 <div id="modal2" class="modal">
-<div class="modalContent" id="groupPics"></div>
+<div class="modalContent">
+
+<span class="closeX" onclick="modal2.style.display='none'">×</span>
+
+<div id="groupPics"></div>
+
+<button onclick="modal2.style.display='none'">Close</button>
+
+</div>
 </div>
 
 
 <div id="galleryModal" class="modal">
 <div class="modalContent">
 
+<span class="closeX" onclick="closeGallery()">×</span>
+
 <button onclick="closeGallery()">Close Gallery</button>
+
+<br><br>
 
 <div id="galleryGrid" class="galleryGrid"></div>
 
@@ -253,6 +294,10 @@ data=Array.isArray(json)?json:(json.data||[])
 filtered=[...data]
 
 initFilters()
+
+document.getElementById("loadingMessage").style.display="none"
+document.getElementById("filters").style.display="flex"
+
 render()
 
 }
@@ -319,16 +364,12 @@ render()
 }
 
 function pageSize(){
-return parseInt(pageSizeSelect.value||10)
+return parseInt(document.getElementById("pageSize").value)
 }
 
-const pageSizeSelect=document.getElementById("pageSize")
-
 function paginate(){
-
 const start=(page-1)*pageSize()
 return filtered.slice(start,start+pageSize())
-
 }
 
 function render(){
@@ -496,7 +537,6 @@ html+=`<img src="group_pics/group-${i}.jpeg" onerror="this.style.display='none'"
 }
 
 galleryGrid.innerHTML=html
-
 galleryModal.style.display="block"
 
 }
