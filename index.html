@@ -3,101 +3,82 @@
 <head>
     <meta charset="UTF-8">
     <title>CEG 1977 Batch Golden Jubilee</title>
-    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 100; align-items: center; justify-content: center; }
-        .sticky-top { position: sticky; top: 0; background: #f1f5f9; }
+        /* Professional Corporate CSS */
+        body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 14px; background: #f4f7f6; color: #333; margin: 0; padding: 20px; }
+        .container { max-width: 1000px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th { background: #004a99; color: white; padding: 12px; text-align: left; }
+        td { padding: 12px; border-bottom: 1px solid #ddd; }
+        .btn { padding: 8px 16px; background: #004a99; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; }
+        .modal-box { background: white; padding: 20px; border-radius: 8px; width: 500px; max-height: 80vh; overflow-y: auto; }
+        .filter-section { margin-bottom: 20px; padding: 10px; background: #eef2f7; border-radius: 4px; }
     </style>
 </head>
-<body class="bg-slate-50 p-4">
+<body>
 
-    <header class="bg-white p-4 shadow rounded mb-4 flex items-center justify-between">
-        <h1 class="text-xl font-bold uppercase">CEG 1977 Batch Golden Jubilee</h1>
-        <input type="text" id="searchBar" placeholder="Search..." class="border p-2 rounded" oninput="render()">
-    </header>
-
-    <div class="bg-white p-4 shadow rounded mb-4 flex gap-4">
-        <select id="branchFilter" onchange="render()" class="border p-2 rounded"><option value="ALL">All Branches</option></select>
-        <span id="recordCount" class="font-bold"></span>
+<div class="container">
+    <h1>CEG 1977 Batch Golden Jubilee</h1>
+    <div class="filter-section">
+        <input type="text" id="search" placeholder="Search by name..." oninput="renderTable()">
+        <select id="branchFilter" onchange="renderTable()"><option value="ALL">All Branches</option></select>
     </div>
+    
+    <table id="dataTable">
+        <thead><tr><th>Name</th><th>Branch</th><th>DOB</th><th>Action</th></tr></thead>
+        <tbody id="tableBody"></tbody>
+    </table>
+</div>
 
-    <div class="bg-white shadow rounded overflow-hidden">
-        <table class="w-full text-left">
-            <thead class="sticky-top bg-slate-100">
-                <tr><th class="p-3">Name</th><th class="p-3">Branch</th><th class="p-3">DOB</th><th class="p-3">Action</th></tr>
-            </thead>
-            <tbody id="tableBody"></tbody>
-        </table>
-    </div>
+<div id="modal" class="modal"><div class="modal-box"><div id="modalContent"></div><button class="btn" onclick="closeModal()">Close</button></div></div>
 
-    <div id="modal1" class="modal" onclick="closeModal('modal1')">
-        <div class="bg-white p-6 rounded-lg w-full max-w-lg" onclick="event.stopPropagation()">
-            <h2 id="m1Name" class="text-2xl font-bold mb-4"></h2>
-            <div id="m1Details"></div>
-            <button onclick="closeModal('modal1')" class="mt-4 bg-red-500 text-white p-2 rounded">Close</button>
-        </div>
-    </div>
+<script>
+    let allData = [];
 
-    <script>
-        // 1. GLOBAL DATA
-        let allData = [];
-
-        // 2. DATA INITIALIZATION
-        async function init() {
-            const URL = 'https://script.google.com/macros/s/AKfycbyYMhxBdpR0z92oBljcE_QRjF_ZqKA8asjiviXkXG6sPXzVh3j9npVisxqtNZBsCgHyBg/exec';
-            try {
-                const res = await fetch(URL);
-                allData = await res.json();
-                populateFilters();
-                render();
-            } catch (e) {
-                console.error("Initialization Error:", e);
-                alert("Failed to load data. Check Console (F12).");
-            }
-        }
-
-        // 3. FILTER LOGIC
-        function populateFilters() {
-            const branches = [...new Set(allData.map(d => d.Branch_name))].sort();
+    async function init() {
+        try {
+            const res = await fetch('https://script.google.com/macros/s/AKfycbyYMhxBdpR0z92oBljcE_QRjF_ZqKA8asjiviXkXG6sPXzVh3j9npVisxqtNZBsCgHyBg/exec');
+            allData = await res.json();
+            
+            // Populate branch dropdown
+            const branches = [...new Set(allData.map(d => d.Branch_name))];
             const select = document.getElementById('branchFilter');
             branches.forEach(b => select.innerHTML += `<option value="${b}">${b}</option>`);
-        }
-
-        // 4. RENDERING LOGIC
-        function render() {
-            const branch = document.getElementById('branchFilter').value;
-            const search = document.getElementById('searchBar').value.toLowerCase();
-            const tbody = document.getElementById('tableBody');
             
-            const filtered = allData.filter(d => 
-                (branch === 'ALL' || d.Branch_name === branch) && 
-                (d.Name.toLowerCase().includes(search))
-            );
+            renderTable();
+        } catch (e) { alert("Data fetch failed. Ensure deployment is 'Me/Anyone'."); }
+    }
 
-            document.getElementById('recordCount').innerText = `Records: ${filtered.length}`;
-            tbody.innerHTML = filtered.map(d => `
-                <tr class="border-b">
-                    <td class="p-3">${d.Name}</td>
-                    <td class="p-3">${d.Branch_name}</td>
-                    <td class="p-3">${d.Date_of_birth}</td>
-                    <td class="p-3"><button onclick="viewDetails('${d.Name}')" class="bg-blue-600 text-white px-3 py-1 rounded">View</button></td>
-                </tr>
-            `).join('');
-        }
+    function renderTable() {
+        const search = document.getElementById('search').value.toLowerCase();
+        const branch = document.getElementById('branchFilter').value;
+        const body = document.getElementById('tableBody');
+        
+        const filtered = allData.filter(d => 
+            (branch === 'ALL' || d.Branch_name === branch) && 
+            (d.Name.toLowerCase().includes(search))
+        );
 
-        // 5. MODAL LOGIC
-        function viewDetails(name) {
-            const d = allData.find(x => x.Name === name);
-            document.getElementById('m1Name').innerText = d.Name;
-            document.getElementById('m1Details').innerHTML = Object.entries(d)
-                .map(([k, v]) => `<p><strong>${k}:</strong> ${v}</p>`).join('');
-            document.getElementById('modal1').style.display = 'flex';
-        }
+        body.innerHTML = filtered.map(d => `
+            <tr>
+                <td>${d.Name}</td>
+                <td>${d.Branch_name}</td>
+                <td>${d.Date_of_birth}</td>
+                <td><button class="btn" onclick="showDetails('${d.Name}')">View</button></td>
+            </tr>
+        `).join('');
+    }
 
-        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+    function showDetails(name) {
+        const d = allData.find(x => x.Name === name);
+        document.getElementById('modalContent').innerHTML = `<h3>${d.Name}</h3><p>Branch: ${d.Branch_name}</p><p>Email: ${d.Email_address}</p>`;
+        document.getElementById('modal').style.display = 'flex';
+    }
 
-        // 6. START APP
-        window.onload = init;
-    </script>
+    function closeModal() { document.getElementById('modal').style.display = 'none'; }
+
+    window.onload = init;
+</script>
 </body>
 </html>
