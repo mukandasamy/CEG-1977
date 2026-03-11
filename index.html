@@ -3,7 +3,6 @@
 
 <head>
 <meta charset="UTF-8">
-
 <title>CEG 1977 Batch Golden Jubilee</title>
 
 <style>
@@ -22,14 +21,9 @@ border-bottom:1px solid #ddd;
 padding-bottom:8px;
 }
 
-header img{
-height:70px;
-}
+header img{height:70px;}
 
-h1{
-margin:0;
-font-size:22px;
-}
+h1{margin:0;font-size:22px;}
 
 button{
 background:#3b5fa0;
@@ -41,9 +35,7 @@ border-radius:4px;
 cursor:pointer;
 }
 
-button:disabled{
-opacity:.4;
-}
+button:disabled{opacity:.4;}
 
 #search{
 margin-left:auto;
@@ -65,9 +57,7 @@ border:none;
 padding:6px;
 }
 
-#recordCount{
-margin-left:auto;
-}
+#recordCount{margin-left:auto;}
 
 table{
 width:100%;
@@ -80,9 +70,7 @@ border:1px solid #ddd;
 padding:6px;
 }
 
-thead{
-background:#f1f5f9;
-}
+thead{background:#f1f5f9;}
 
 .cardGrid{
 display:grid;
@@ -148,9 +136,7 @@ display:block;
 </style>
 </head>
 
-
 <body>
-
 
 <header>
 
@@ -164,9 +150,7 @@ display:block;
 
 </header>
 
-
 <div id="loadingMessage">Loading directory...</div>
-
 
 <div id="filters" style="display:none">
 
@@ -182,10 +166,8 @@ display:block;
 
 </div>
 
-
 <div id="tableView"></div>
 <div id="cardView" style="display:none"></div>
-
 
 <div class="footer">
 
@@ -204,7 +186,6 @@ display:block;
 
 </div>
 
-
 <div id="modal1" class="modal">
 
 <div class="modalContent">
@@ -218,7 +199,6 @@ display:block;
 </div>
 
 </div>
-
 
 <div id="galleryModal" class="modal">
 
@@ -236,7 +216,6 @@ display:block;
 
 </div>
 
-
 <script>
 
 const url="https://script.google.com/macros/s/AKfycbyYMhxBdpR0z92oBljcE_QRjF_ZqKA8asjiviXkXG6sPXzVh3j9npVisxqtNZBsCgHyBg/exec"
@@ -248,24 +227,25 @@ let cardMode=false
 
 const months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
 
-
 function encodeName(n){
-
 return encodeURIComponent(n)
-
 }
-
 
 function formatDOB(d){
 
 if(!d) return ""
 
-let p=d.split("-")
+let date=new Date(d)
 
-return p[0]+"-"+p[1]
+if(isNaN(date)) return d
+
+let dd=("0"+date.getDate()).slice(-2)
+
+let mmm=months[date.getMonth()]
+
+return dd+"-"+mmm
 
 }
-
 
 async function loadData(){
 
@@ -275,135 +255,84 @@ data=await res.json()
 
 filtered=[...data]
 
-buildFilters()
+initFilters()
 
 loadingMessage.style.display="none"
-
 filters.style.display="flex"
 
 render()
 
 }
 
+function initFilters(){
 
-
-function buildFilters(){
-
-const branches=[...new Set(filtered.map(x=>x.Branch))].sort()
+const branches=[...new Set(data.map(x=>x.Branch))].sort()
 
 branchFilter.innerHTML="<option value='ALL'>All Branches</option>"
-
-branches.forEach(b=>branchFilter.innerHTML+=`<option>${b}</option>`)
-
-
-
-const monthsPresent=[...new Set(filtered.map(x=>x.Date_of_birth.split("-")[1]))]
-
-monthsPresent.sort((a,b)=>months.indexOf(a)-months.indexOf(b))
+branches.forEach(b=>branchFilter.innerHTML+=`<option value="${b}">${b}</option>`)
 
 monthFilter.innerHTML="<option value='ALL'>All Months</option>"
+months.forEach(m=>monthFilter.innerHTML+=`<option value="${m}">${m}</option>`)
 
-monthsPresent.forEach(m=>monthFilter.innerHTML+=`<option>${m}</option>`)
-
-
-
-const letters=[...new Set(filtered.map(x=>x.Name[0].toUpperCase()))].sort()
+const letters=[...new Set(data.map(x=>x.Name[0].toUpperCase()))].sort()
 
 alphaFilter.innerHTML="<option value='ALL'>All Letters</option>"
-
-letters.forEach(a=>alphaFilter.innerHTML+=`<option>${a}</option>`)
+letters.forEach(a=>alphaFilter.innerHTML+=`<option value="${a}">${a}</option>`)
 
 }
-
-
 
 function applyFilters(){
 
 const b=branchFilter.value
-
 const m=monthFilter.value
-
 const a=alphaFilter.value
-
 const s=search.value.toLowerCase()
-
-
 
 filtered=data.filter(d=>{
 
+let dob=new Date(d.Date_of_birth)
+let mmm=months[dob.getMonth()]
+
 if(b!=="ALL" && d.Branch!==b) return false
-
-if(m!=="ALL" && d.Date_of_birth.split("-")[1]!==m) return false
-
+if(m!=="ALL" && mmm!==m) return false
 if(a!=="ALL" && d.Name[0].toUpperCase()!==a) return false
-
 if(s && !Object.values(d).join(" ").toLowerCase().includes(s)) return false
 
 return true
 
 })
 
-
-
 page=1
-
-buildFilters()
-
 render()
 
 }
 
-
-
 branchFilter.onchange=applyFilters
-
 monthFilter.onchange=applyFilters
-
 alphaFilter.onchange=applyFilters
-
 search.oninput=applyFilters
-
-
 
 function clearFilters(){
 
 search.value=""
-
 branchFilter.value="ALL"
-
 monthFilter.value="ALL"
-
 alphaFilter.value="ALL"
-
-
 
 filtered=[...data]
 
-buildFilters()
-
 render()
 
 }
-
-
 
 function pageSize(){
-
 return parseInt(document.getElementById("pageSize").value)
-
 }
-
-
 
 pageSize.onchange=function(){
-
 page=1
-
 render()
-
 }
-
-
 
 function paginate(){
 
@@ -413,119 +342,71 @@ return filtered.slice(start,start+pageSize())
 
 }
 
-
-
 function render(){
 
 recordCount.innerText=filtered.length+" records"
 
-
-
 if(cardMode) renderCards()
-
 else renderTable()
-
-
 
 updatePagination()
 
 }
 
-
-
 function renderTable(){
 
 const rows=paginate()
 
-
-
 let html="<table><thead><tr><th>Name</th><th>Branch</th><th>DOB</th><th>Email</th><th>Phone</th><th>Action</th></tr></thead><tbody>"
-
-
 
 rows.forEach((r,i)=>{
 
 const idx=(page-1)*pageSize()+i
 
-
-
 html+=`
 
 <tr>
-
 <td>${r.Name}</td>
-
 <td>${r.Branch}</td>
-
 <td>${formatDOB(r.Date_of_birth)}</td>
-
 <td>${r.Email_address||""}</td>
-
 <td>${r.Phone_numbers||""}</td>
-
 <td><button onclick="showDetails(${idx})">View Details</button></td>
-
 </tr>
 
 `
 
 })
 
-
-
 html+="</tbody></table>"
-
-
 
 tableView.innerHTML=html
 
 }
 
-
-
 function renderCards(){
 
 const rows=paginate()
 
-
-
 let html="<div class='cardGrid'>"
 
-
-
 rows.forEach(r=>{
-
-
 
 html+=`
 
 <div class="card">
 
-
-
 <div class="cardImages">
 
 <img src="individual_pics/${encodeName(r.Name)}-1977.jpeg" onerror="this.style.display='none'">
-
 <img src="individual_pics/${encodeName(r.Name)}-2020.jpeg" onerror="this.style.display='none'">
-
 <img src="individual_pics/${encodeName(r.Name)}-2027.jpeg" onerror="this.style.display='none'">
 
 </div>
 
-
-
 <b>${r.Name}</b><br>
-
 ${r.Branch}<br>
-
-${formatDOB(r.Date_of_birth)}<br>
-
-${r.Email_address||""}<br>
-
-${r.Phone_numbers||""}
-
-
+${formatDOB(r.Date_of_birth)}
 
 </div>
 
@@ -533,143 +414,85 @@ ${r.Phone_numbers||""}
 
 })
 
-
-
 html+="</div>"
-
-
 
 cardView.innerHTML=html
 
 }
 
-
-
 function toggleView(){
 
 cardMode=!cardMode
 
-
-
 tableView.style.display=cardMode?"none":"block"
-
 cardView.style.display=cardMode?"block":"none"
 
-
-
 viewBtn.innerText=cardMode?"Show Table View":"Show Card View"
-
-
 
 render()
 
 }
-
-
 
 function updatePagination(){
 
 const total=Math.ceil(filtered.length/pageSize())
 
-
-
 pageInfo.innerText="Page "+page+" / "+(total||1)
 
-
-
 prevBtn.disabled=(page===1)
-
 nextBtn.disabled=(page===total)
 
 }
 
-
-
 function prevPage(){
-
-if(page>1){
-
-page--
-
-render()
-
+if(page>1){page--;render()}
 }
-
-}
-
-
 
 function nextPage(){
 
 const total=Math.ceil(filtered.length/pageSize())
 
-
-
-if(page<total){
-
-page++
-
-render()
+if(page<total){page++;render()}
 
 }
-
-}
-
-
 
 function showDetails(i){
 
 const r=filtered[i]
 
+let html=""
 
+for(let k in r){
 
-let html=`
+html+=`<b>${k}</b>: ${r[k]||""}<br>`
 
+}
 
-
-<img src="individual_pics/${encodeName(r.Name)}-1977.jpeg" onerror="this.style.display='none'">
-
-<img src="individual_pics/${encodeName(r.Name)}-2020.jpeg" onerror="this.style.display='none'">
-
-<img src="individual_pics/${encodeName(r.Name)}-2027.jpeg" onerror="this.style.display='none'">
-
-
-
-<br><br>
-
-
-
-<b>${r.Name}</b><br>
-
-${r.Branch}<br>
-
-DOB: ${formatDOB(r.Date_of_birth)}<br>
-
-Email: ${r.Email_address||""}<br>
-
-Phone: ${r.Phone_numbers||""}
-
-
-
-`
-
-
+html+=`<br><button onclick="showMorePics('${encodeName(r.Name)}')">View More Pictures</button>`
 
 modalBody.innerHTML=html
-
-
 
 modal1.style.display="block"
 
 }
 
+function showMorePics(name){
 
+let html=""
+
+for(let i=1;i<=20;i++){
+
+html+=`<img src="group_pics/${name}-${i}.jpeg" onerror="this.style.display='none'">`
+
+}
+
+modalBody.innerHTML+=html
+
+}
 
 function openGallery(){
 
 let html=""
-
-
 
 for(let i=1;i<=100;i++){
 
@@ -677,44 +500,24 @@ html+=`<img src="group_pics/group-${i}.jpeg" onerror="this.style.display='none'"
 
 }
 
-
-
 galleryGrid.innerHTML=html
-
-
 
 galleryModal.style.display="block"
 
 }
 
-
-
 function closeGallery(){
-
 galleryModal.style.display="none"
-
 }
-
-
 
 window.onclick=function(e){
-
 if(e.target.classList.contains("modal"))
-
 e.target.style.display="none"
-
 }
-
-
 
 loadData()
 
-
-
 </script>
 
-
-
 </body>
-
 </html>
