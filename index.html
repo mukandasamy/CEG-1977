@@ -10,15 +10,17 @@ body{
 font-family:Arial,Helvetica,sans-serif;
 font-size:14px;
 margin:0;
-background:#fff;
+background:white;
 }
+
+/* HEADER */
 
 header{
 display:flex;
 align-items:center;
 gap:15px;
 padding:10px;
-border-bottom:1px solid #ddd;
+border-bottom:1px solid #ccc;
 }
 
 header img{
@@ -31,36 +33,51 @@ font-size:20px;
 flex-grow:1;
 }
 
+/* SEARCH */
+
 input[type=text]{
 padding:6px;
 width:260px;
+border:1px solid #1e73be;
 }
+
+/* BUTTONS */
 
 button{
 padding:6px 10px;
 cursor:pointer;
+background:#1e73be;
+color:white;
+border:none;
 }
+
+/* FILTER BAR */
 
 #filters{
 display:flex;
 gap:10px;
 padding:8px;
-border-bottom:1px solid #ddd;
+border-bottom:2px solid #1e73be;
 align-items:center;
 position:sticky;
 top:0;
-background:white;
+background:#eef5ff;
 z-index:100;
 }
 
 select{
 padding:5px;
+border:1px solid #1e73be;
+background:white;
 }
 
 #recordCount{
 margin-left:auto;
 font-weight:bold;
+color:#1e73be;
 }
+
+/* TABLE */
 
 table{
 width:100%;
@@ -68,7 +85,7 @@ border-collapse:collapse;
 }
 
 thead{
-background:#f4f4f4;
+background:#dbe9ff;
 position:sticky;
 top:42px;
 }
@@ -78,6 +95,8 @@ padding:6px;
 border-bottom:1px solid #ddd;
 text-align:left;
 }
+
+/* CARDS */
 
 .cardContainer{
 display:flex;
@@ -95,8 +114,10 @@ width:380px;
 .cardImages{
 display:flex;
 gap:6px;
-align-items:flex-start;
+overflow-x:auto;
 }
+
+/* FOOTER */
 
 footer{
 display:flex;
@@ -109,6 +130,8 @@ border-top:1px solid #ddd;
 margin-left:auto;
 }
 
+/* MODALS */
+
 .modal{
 display:none;
 position:fixed;
@@ -117,7 +140,7 @@ left:5%;
 width:90%;
 height:85%;
 background:white;
-border:1px solid #444;
+border:2px solid #1e73be;
 overflow:auto;
 padding:10px;
 z-index:999;
@@ -127,7 +150,10 @@ z-index:999;
 display:flex;
 gap:10px;
 margin-bottom:10px;
+overflow-x:auto;
 }
+
+/* GALLERY */
 
 .gallery{
 display:grid;
@@ -136,14 +162,14 @@ gap:10px;
 padding:10px;
 }
 
-img{
-max-width:none;
-}
+/* LOADING */
 
 .loading{
 padding:20px;
 font-weight:bold;
 }
+
+/* MOBILE */
 
 @media (max-width:900px){
 
@@ -271,6 +297,11 @@ function safeName(name){
 return name.replace(/[^a-zA-Z0-9]/g,"_")
 }
 
+function formatDOB(d){
+let parts=d.split("-")
+return parts[0]+"-"+parts[1]
+}
+
 document.addEventListener("keydown",e=>{
 if(e.key==="Escape") closeModal()
 })
@@ -281,7 +312,6 @@ const res=await fetch(DATA_URL)
 rawData=await res.json()
 
 populateFilters()
-
 applyFilters()
 
 document.getElementById("loading").style.display="none"
@@ -291,7 +321,7 @@ document.getElementById("tableView").style.display="block"
 
 function populateFilters(){
 
-let branches=[...new Set(rawData.map(r=>r.Branch_name))].sort()
+let branches=[...new Set(rawData.map(r=>r.Branch))].sort()
 
 let months=[...new Set(rawData.map(r=>r.Date_of_birth.split("-")[1]))]
 
@@ -341,7 +371,7 @@ filtered=rawData.filter(r=>{
 
 let match=true
 
-if(branch!="ALL") match &= r.Branch_name==branch
+if(branch!="ALL") match &= r.Branch==branch
 if(month!="ALL") match &= r.Date_of_birth.includes(month)
 if(letter!="ALL") match &= r.Name.startsWith(letter)
 
@@ -382,36 +412,29 @@ function renderTable(data){
 let tb=document.getElementById("tableBody")
 tb.innerHTML=""
 
-let frag=document.createDocumentFragment()
-
 data.forEach(r=>{
 
 let tr=document.createElement("tr")
 
 tr.innerHTML=`
 <td>${r.Name}</td>
-<td>${r.Branch_name}</td>
-<td>${r.Date_of_birth}</td>
+<td>${r.Branch}</td>
+<td>${formatDOB(r.Date_of_birth)}</td>
 <td>${r.Email_address}</td>
 <td>${r.Phone_numbers}</td>
 <td><button onclick='showDetails(${JSON.stringify(r)})'>View Details</button></td>
 `
 
-frag.appendChild(tr)
+tb.appendChild(tr)
 
 })
-
-tb.appendChild(frag)
 
 }
 
 function renderCards(data){
 
 let c=document.getElementById("cardView")
-
 c.innerHTML=""
-
-let frag=document.createDocumentFragment()
 
 data.forEach(r=>{
 
@@ -425,9 +448,7 @@ div.innerHTML=`
 <div class="cardImages">
 
 <img loading="lazy" src="individual_pics/${name}-1977.jpeg" onerror="this.src='silhouette.jpeg'">
-
 <img loading="lazy" src="individual_pics/${name}-2020.jpeg" onerror="this.src='silhouette.jpeg'">
-
 <img loading="lazy" src="individual_pics/${name}-2027.jpeg" onerror="this.src='silhouette.jpeg'">
 
 </div>
@@ -436,18 +457,16 @@ div.innerHTML=`
 <button onclick="showGroup('${name}')">Show Pictures</button>
 
 <div><b>${r.Name}</b></div>
-<div>${r.Branch_name}</div>
-<div>${r.Date_of_birth}</div>
+<div>${r.Branch}</div>
+<div>${formatDOB(r.Date_of_birth)}</div>
 <div>${r.Email_address}</div>
 <div>${r.Phone_numbers}</div>
 
 `
 
-frag.appendChild(div)
+c.appendChild(div)
 
 })
-
-c.appendChild(frag)
 
 }
 
@@ -463,12 +482,7 @@ render()
 }
 
 function prevPage(){
-
-if(currentPage>1){
-currentPage--
-render()
-}
-
+if(currentPage>1){currentPage--;render()}
 }
 
 function nextPage(){
@@ -489,9 +503,7 @@ let name=safeName(r.Name)
 let rows=""
 
 for(let k in r){
-
 rows+=`<tr><td>${k}</td><td>${r[k]}</td></tr>`
-
 }
 
 let m=document.getElementById("modal1")
@@ -502,11 +514,9 @@ m.innerHTML=`
 
 <div class="modalImages">
 
-<img loading="lazy" src="individual_pics/${name}-1977.jpeg" onerror="this.src='silhouette.jpeg'">
-
-<img loading="lazy" src="individual_pics/${name}-2020.jpeg" onerror="this.src='silhouette.jpeg'">
-
-<img loading="lazy" src="individual_pics/${name}-2027.jpeg" onerror="this.src='silhouette.jpeg'">
+<img src="individual_pics/${name}-1977.jpeg" onerror="this.src='silhouette.jpeg'">
+<img src="individual_pics/${name}-2020.jpeg" onerror="this.src='silhouette.jpeg'">
+<img src="individual_pics/${name}-2027.jpeg" onerror="this.src='silhouette.jpeg'">
 
 <button onclick="showGroup('${name}')">Show More Pictures</button>
 
@@ -527,15 +537,12 @@ let m=document.getElementById("modal2")
 let html="<button onclick='closeModal()'>Close</button><div class='gallery'>"
 
 for(let i=1;i<=25;i++){
-
-html+=`<img loading="lazy" src="group_pics/${name}-${i}.jpeg" onerror="this.style.display='none'">`
-
+html+=`<img src="group_pics/${name}-${i}.jpeg" onerror="this.style.display='none'">`
 }
 
 html+="</div>"
 
 m.innerHTML=html
-
 m.style.display="block"
 
 }
@@ -563,10 +570,7 @@ for(let i=1;i<=100;i++){
 
 let img=document.createElement("img")
 
-img.loading="lazy"
-
 img.src=`group_pics/group-${i}.jpeg`
-
 img.onerror=function(){this.style.display="none"}
 
 g.appendChild(img)
