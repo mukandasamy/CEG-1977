@@ -12,8 +12,6 @@ font-size:14px;
 margin:0;
 }
 
-/* HEADER */
-
 header{
 display:flex;
 align-items:center;
@@ -32,14 +30,10 @@ flex-grow:1;
 font-size:20px;
 }
 
-/* SEARCH */
-
 input{
 padding:6px;
 border:1px solid #2a6fd6;
 }
-
-/* BUTTON */
 
 button{
 background:#2a6fd6;
@@ -48,8 +42,6 @@ border:none;
 padding:6px 10px;
 cursor:pointer;
 }
-
-/* FILTER BAR */
 
 #filters{
 display:flex;
@@ -66,8 +58,6 @@ border:1px solid #2a6fd6;
 padding:5px;
 }
 
-/* TABLE */
-
 table{
 width:100%;
 border-collapse:collapse;
@@ -75,16 +65,12 @@ border-collapse:collapse;
 
 thead{
 background:#dbe7ff;
-position:sticky;
-top:40px;
 }
 
 th,td{
 padding:6px;
 border-bottom:1px solid #ddd;
 }
-
-/* CARDS */
 
 .cardContainer{
 display:flex;
@@ -104,8 +90,6 @@ gap:10px;
 overflow-x:auto;
 }
 
-/* MODALS */
-
 .modal{
 display:none;
 position:fixed;
@@ -124,21 +108,17 @@ z-index:1000;
 display:flex;
 gap:10px;
 overflow-x:auto;
+margin-bottom:10px;
 }
 
-/* GALLERY */
-
 .gallery{
-display:flex;
-flex-wrap:wrap;
-gap:10px;
+padding:20px;
 }
 
 .gallery img{
 display:block;
+margin-bottom:20px;
 }
-
-/* FOOTER */
 
 footer{
 display:flex;
@@ -214,13 +194,9 @@ margin-left:auto;
 </select>
 
 <div id="pagination">
-
 <button onclick="prevPage()">Prev</button>
-
 <span id="pageInfo"></span>
-
 <button onclick="nextPage()">Next</button>
-
 </div>
 
 </footer>
@@ -289,10 +265,10 @@ s.appendChild(o)
 
 function clearFilters(){
 
-document.getElementById("branchFilter").value="ALL"
-document.getElementById("monthFilter").value="ALL"
-document.getElementById("letterFilter").value="ALL"
-document.getElementById("searchBox").value=""
+branchFilter.value="ALL"
+monthFilter.value="ALL"
+letterFilter.value="ALL"
+searchBox.value=""
 
 applyFilters()
 
@@ -300,24 +276,24 @@ applyFilters()
 
 function applyFilters(){
 
-let branch=document.getElementById("branchFilter").value
-let month=document.getElementById("monthFilter").value
-let letter=document.getElementById("letterFilter").value
-let search=document.getElementById("searchBox").value.toLowerCase()
+let branch=branchFilter.value
+let month=monthFilter.value
+let letter=letterFilter.value
+let search=searchBox.value.toLowerCase()
 
 filtered=rawData.filter(r=>{
 
-let match=true
+let ok=true
 
-if(branch!="ALL") match &= r.Branch==branch
-if(month!="ALL") match &= r.Date_of_birth.includes(month)
-if(letter!="ALL") match &= r.Name.startsWith(letter)
+if(branch!=="ALL") ok = ok && r.Branch===branch
+if(month!=="ALL") ok = ok && r.Date_of_birth.includes(month)
+if(letter!=="ALL") ok = ok && r.Name.startsWith(letter)
 
 if(search){
-match &= Object.values(r).join(" ").toLowerCase().includes(search)
+ok = ok && Object.values(r).join(" ").toLowerCase().includes(search)
 }
 
-return match
+return ok
 
 })
 
@@ -328,16 +304,17 @@ render()
 
 function render(){
 
-let pageSize=parseInt(document.getElementById("pageSize").value)
+let pageSize=parseInt(pageSizeSelect.value||10)
+pageSizeSelect=document.getElementById("pageSize")
 
 let start=(currentPage-1)*pageSize
 let end=start+pageSize
 
 let pageData=filtered.slice(start,end)
 
-document.getElementById("recordCount").innerText=filtered.length+" records"
+recordCount.innerText=filtered.length+" records"
 
-document.getElementById("pageInfo").innerText=currentPage+" / "+Math.ceil(filtered.length/pageSize)
+pageInfo.innerText=currentPage+" / "+Math.ceil(filtered.length/pageSize)
 
 if(cardMode) renderCards(pageData)
 else renderTable(pageData)
@@ -346,10 +323,9 @@ else renderTable(pageData)
 
 function renderTable(data){
 
-let tb=document.getElementById("tableBody")
-tb.innerHTML=""
+tableBody.innerHTML=""
 
-data.forEach(r=>{
+data.forEach((r,i)=>{
 
 let tr=document.createElement("tr")
 
@@ -359,10 +335,10 @@ tr.innerHTML=`
 <td>${r.Date_of_birth}</td>
 <td>${r.Email_address}</td>
 <td>${r.Phone_numbers}</td>
-<td><button onclick='showDetails(${JSON.stringify(r)})'>View Details</button></td>
+<td><button onclick="showDetails(${i})">View Details</button></td>
 `
 
-tb.appendChild(tr)
+tableBody.appendChild(tr)
 
 })
 
@@ -370,10 +346,9 @@ tb.appendChild(tr)
 
 function renderCards(data){
 
-let c=document.getElementById("cardView")
-c.innerHTML=""
+cardView.innerHTML=""
 
-data.forEach(r=>{
+data.forEach((r,i)=>{
 
 let div=document.createElement("div")
 div.className="card"
@@ -388,7 +363,7 @@ div.innerHTML=`
 
 </div>
 
-<button onclick='showDetails(${JSON.stringify(r)})'>View Details</button>
+<button onclick="showDetails(${i})">View Details</button>
 
 <div><b>${r.Name}</b></div>
 <div>${r.Branch}</div>
@@ -398,7 +373,7 @@ div.innerHTML=`
 
 `
 
-c.appendChild(div)
+cardView.appendChild(div)
 
 })
 
@@ -408,8 +383,8 @@ function toggleView(){
 
 cardMode=!cardMode
 
-document.getElementById("tableView").style.display=cardMode?"none":"block"
-document.getElementById("cardView").style.display=cardMode?"flex":"none"
+tableView.style.display=cardMode?"none":"block"
+cardView.style.display=cardMode?"flex":"none"
 
 render()
 
@@ -421,7 +396,7 @@ if(currentPage>1){currentPage--;render()}
 
 function nextPage(){
 
-let pageSize=parseInt(document.getElementById("pageSize").value)
+let pageSize=parseInt(pageSize.value)
 
 if(currentPage<Math.ceil(filtered.length/pageSize)){
 currentPage++
@@ -430,7 +405,9 @@ render()
 
 }
 
-function showDetails(r){
+function showDetails(index){
+
+let r=filtered[index]
 
 let rows=""
 
@@ -438,9 +415,7 @@ for(let k in r){
 rows+=`<tr><td>${k}</td><td>${r[k]}</td></tr>`
 }
 
-let m=document.getElementById("modal1")
-
-m.innerHTML=`
+modal1.innerHTML=`
 
 <button onclick="closeModal()">Close</button>
 
@@ -458,13 +433,11 @@ m.innerHTML=`
 
 `
 
-m.style.display="block"
+modal1.style.display="block"
 
 }
 
 function showGroup(name){
-
-let m=document.getElementById("modal2")
 
 let html="<button onclick='closeModal()'>Close</button><div class='gallery'>"
 
@@ -474,24 +447,24 @@ html+=`<img src="group_pics/${name}-${i}.jpeg" onerror="this.style.display='none
 
 html+="</div>"
 
-m.innerHTML=html
-m.style.display="block"
+modal2.innerHTML=html
+modal2.style.display="block"
 
 }
 
 function closeModal(){
-document.getElementById("modal1").style.display="none"
-document.getElementById("modal2").style.display="none"
+modal1.style.display="none"
+modal2.style.display="none"
 }
 
 function showGallery(){
 
-document.getElementById("tableView").style.display="none"
-document.getElementById("cardView").style.display="none"
+tableView.style.display="none"
+cardView.style.display="none"
 
-document.getElementById("galleryView").style.display="block"
+galleryView.style.display="block"
 
-let g=document.getElementById("galleryImages")
+let g=galleryImages
 
 if(g.innerHTML===""){
 
@@ -512,12 +485,12 @@ g.appendChild(img)
 
 function hideGallery(){
 
-document.getElementById("galleryView").style.display="none"
+galleryView.style.display="none"
 
 if(cardMode){
-document.getElementById("cardView").style.display="flex"
+cardView.style.display="flex"
 }else{
-document.getElementById("tableView").style.display="block"
+tableView.style.display="block"
 }
 
 }
