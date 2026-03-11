@@ -7,10 +7,9 @@
 <style>
 
 body{
-font-family:Arial,Helvetica,sans-serif;
+font-family:Arial;
 font-size:14px;
 margin:0;
-background:white;
 }
 
 /* HEADER */
@@ -29,26 +28,25 @@ height:70px;
 
 h1{
 margin:0;
-font-size:20px;
 flex-grow:1;
+font-size:20px;
 }
 
 /* SEARCH */
 
-input[type=text]{
+input{
 padding:6px;
-width:260px;
-border:1px solid #1e73be;
+border:1px solid #2a6fd6;
 }
 
-/* BUTTONS */
+/* BUTTON */
 
 button{
-padding:6px 10px;
-cursor:pointer;
-background:#1e73be;
+background:#2a6fd6;
 color:white;
 border:none;
+padding:6px 10px;
+cursor:pointer;
 }
 
 /* FILTER BAR */
@@ -57,24 +55,15 @@ border:none;
 display:flex;
 gap:10px;
 padding:8px;
-border-bottom:2px solid #1e73be;
-align-items:center;
+background:#eef4ff;
+border-bottom:2px solid #2a6fd6;
 position:sticky;
 top:0;
-background:#eef5ff;
-z-index:100;
 }
 
 select{
+border:1px solid #2a6fd6;
 padding:5px;
-border:1px solid #1e73be;
-background:white;
-}
-
-#recordCount{
-margin-left:auto;
-font-weight:bold;
-color:#1e73be;
 }
 
 /* TABLE */
@@ -85,15 +74,14 @@ border-collapse:collapse;
 }
 
 thead{
-background:#dbe9ff;
+background:#dbe7ff;
 position:sticky;
-top:42px;
+top:40px;
 }
 
 th,td{
 padding:6px;
 border-bottom:1px solid #ddd;
-text-align:left;
 }
 
 /* CARDS */
@@ -101,33 +89,19 @@ text-align:left;
 .cardContainer{
 display:flex;
 flex-wrap:wrap;
-gap:12px;
+gap:10px;
 padding:10px;
 }
 
 .card{
 border:1px solid #ddd;
-padding:8px;
-width:380px;
+padding:10px;
 }
 
 .cardImages{
 display:flex;
-gap:6px;
+gap:10px;
 overflow-x:auto;
-}
-
-/* FOOTER */
-
-footer{
-display:flex;
-align-items:center;
-padding:10px;
-border-top:1px solid #ddd;
-}
-
-#pagination{
-margin-left:auto;
 }
 
 /* MODALS */
@@ -140,55 +114,43 @@ left:5%;
 width:90%;
 height:85%;
 background:white;
-border:2px solid #1e73be;
+border:2px solid #2a6fd6;
 overflow:auto;
 padding:10px;
-z-index:999;
+z-index:1000;
 }
 
 .modalImages{
 display:flex;
 gap:10px;
-margin-bottom:10px;
 overflow-x:auto;
 }
 
 /* GALLERY */
 
 .gallery{
-display:grid;
-grid-template-columns:repeat(auto-fill,minmax(350px,1fr));
-gap:10px;
-padding:10px;
-}
-
-/* LOADING */
-
-.loading{
-padding:20px;
-font-weight:bold;
-}
-
-/* MOBILE */
-
-@media (max-width:900px){
-
-.card{
-width:100%;
-}
-
-header{
+display:flex;
 flex-wrap:wrap;
+gap:10px;
 }
 
-input{
-width:100%;
+.gallery img{
+display:block;
 }
 
+/* FOOTER */
+
+footer{
+display:flex;
+padding:10px;
+border-top:1px solid #ccc;
+}
+
+#pagination{
+margin-left:auto;
 }
 
 </style>
-
 </head>
 
 <body>
@@ -201,32 +163,25 @@ width:100%;
 
 <button onclick="showGallery()">Gallery</button>
 
-<input id="searchBox" placeholder="Search name, branch, company, phone, email..." oninput="applyFilters()">
+<input id="searchBox" placeholder="Search..." oninput="applyFilters()">
 
 </header>
-
 
 <div id="filters">
 
 <select id="branchFilter"></select>
-
 <select id="monthFilter"></select>
-
 <select id="letterFilter"></select>
 
 <button onclick="clearFilters()">Clear Filters</button>
 
 <button onclick="toggleView()">Show Card View</button>
 
-<div id="recordCount"></div>
+<div id="recordCount" style="margin-left:auto"></div>
 
 </div>
 
-
-<div id="loading" class="loading">Loading directory...</div>
-
-
-<div id="tableView" style="display:none">
+<div id="tableView">
 
 <table>
 
@@ -247,9 +202,7 @@ width:100%;
 
 </div>
 
-
 <div id="cardView" class="cardContainer" style="display:none"></div>
-
 
 <footer>
 
@@ -261,17 +214,19 @@ width:100%;
 </select>
 
 <div id="pagination">
+
 <button onclick="prevPage()">Prev</button>
+
 <span id="pageInfo"></span>
+
 <button onclick="nextPage()">Next</button>
+
 </div>
 
 </footer>
 
-
 <div id="modal1" class="modal"></div>
 <div id="modal2" class="modal"></div>
-
 
 <div id="galleryView" style="display:none">
 
@@ -280,7 +235,6 @@ width:100%;
 <div class="gallery" id="galleryImages"></div>
 
 </div>
-
 
 <script>
 
@@ -293,19 +247,6 @@ let cardMode=false
 
 const monthOrder=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
 
-function safeName(name){
-return name.replace(/[^a-zA-Z0-9]/g,"_")
-}
-
-function formatDOB(d){
-let parts=d.split("-")
-return parts[0]+"-"+parts[1]
-}
-
-document.addEventListener("keydown",e=>{
-if(e.key==="Escape") closeModal()
-})
-
 async function loadData(){
 
 const res=await fetch(DATA_URL)
@@ -313,9 +254,6 @@ rawData=await res.json()
 
 populateFilters()
 applyFilters()
-
-document.getElementById("loading").style.display="none"
-document.getElementById("tableView").style.display="block"
 
 }
 
@@ -384,7 +322,6 @@ return match
 })
 
 currentPage=1
-
 render()
 
 }
@@ -419,7 +356,7 @@ let tr=document.createElement("tr")
 tr.innerHTML=`
 <td>${r.Name}</td>
 <td>${r.Branch}</td>
-<td>${formatDOB(r.Date_of_birth)}</td>
+<td>${r.Date_of_birth}</td>
 <td>${r.Email_address}</td>
 <td>${r.Phone_numbers}</td>
 <td><button onclick='showDetails(${JSON.stringify(r)})'>View Details</button></td>
@@ -438,8 +375,6 @@ c.innerHTML=""
 
 data.forEach(r=>{
 
-let name=safeName(r.Name)
-
 let div=document.createElement("div")
 div.className="card"
 
@@ -447,18 +382,17 @@ div.innerHTML=`
 
 <div class="cardImages">
 
-<img loading="lazy" src="individual_pics/${name}-1977.jpeg" onerror="this.src='silhouette.jpeg'">
-<img loading="lazy" src="individual_pics/${name}-2020.jpeg" onerror="this.src='silhouette.jpeg'">
-<img loading="lazy" src="individual_pics/${name}-2027.jpeg" onerror="this.src='silhouette.jpeg'">
+<img src="individual_pics/${r.Name}-1977.jpeg" onerror="this.src='silhouette.jpeg'">
+<img src="individual_pics/${r.Name}-2020.jpeg" onerror="this.src='silhouette.jpeg'">
+<img src="individual_pics/${r.Name}-2027.jpeg" onerror="this.src='silhouette.jpeg'">
 
 </div>
 
 <button onclick='showDetails(${JSON.stringify(r)})'>View Details</button>
-<button onclick="showGroup('${name}')">Show Pictures</button>
 
 <div><b>${r.Name}</b></div>
 <div>${r.Branch}</div>
-<div>${formatDOB(r.Date_of_birth)}</div>
+<div>${r.Date_of_birth}</div>
 <div>${r.Email_address}</div>
 <div>${r.Phone_numbers}</div>
 
@@ -498,8 +432,6 @@ render()
 
 function showDetails(r){
 
-let name=safeName(r.Name)
-
 let rows=""
 
 for(let k in r){
@@ -514,11 +446,11 @@ m.innerHTML=`
 
 <div class="modalImages">
 
-<img src="individual_pics/${name}-1977.jpeg" onerror="this.src='silhouette.jpeg'">
-<img src="individual_pics/${name}-2020.jpeg" onerror="this.src='silhouette.jpeg'">
-<img src="individual_pics/${name}-2027.jpeg" onerror="this.src='silhouette.jpeg'">
+<img src="individual_pics/${r.Name}-1977.jpeg" onerror="this.src='silhouette.jpeg'">
+<img src="individual_pics/${r.Name}-2020.jpeg" onerror="this.src='silhouette.jpeg'">
+<img src="individual_pics/${r.Name}-2027.jpeg" onerror="this.src='silhouette.jpeg'">
 
-<button onclick="showGroup('${name}')">Show More Pictures</button>
+<button onclick="showGroup('${r.Name}')">Show More Pictures</button>
 
 </div>
 
@@ -548,17 +480,14 @@ m.style.display="block"
 }
 
 function closeModal(){
-
 document.getElementById("modal1").style.display="none"
 document.getElementById("modal2").style.display="none"
-
 }
 
 function showGallery(){
 
 document.getElementById("tableView").style.display="none"
 document.getElementById("cardView").style.display="none"
-document.querySelector("footer").style.display="none"
 
 document.getElementById("galleryView").style.display="block"
 
@@ -584,7 +513,6 @@ g.appendChild(img)
 function hideGallery(){
 
 document.getElementById("galleryView").style.display="none"
-document.querySelector("footer").style.display="flex"
 
 if(cardMode){
 document.getElementById("cardView").style.display="flex"
