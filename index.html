@@ -3,357 +3,147 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CEG 1977 Batch Golden Jubilee</title>
+    <title>CEG 1977 Golden Jubilee</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <style>
-        body { font-size: 14px; background-color: #f8fafc; color: #1e293b; }
-        .sticky-header th { position: sticky; top: 0; background: #f1f5f9; z-index: 10; }
-        .modal-overlay { background: rgba(0,0,0,0.5); }
-        .corporate-table th, .corporate-table td { padding: 8px 12px; border-bottom: 1px solid #e2e8f0; }
-        .btn-primary { background-color: #1e40af; color: white; padding: 6px 12px; border-radius: 4px; transition: 0.2s; }
-        .btn-primary:hover { background-color: #1e3a8a; }
-        .btn-outline { border: 1px solid #cbd5e1; padding: 6px 12px; border-radius: 4px; }
-        .profile-img { object-fit: contain; max-height: 150px; background: #e2e8f0; }
-        .gallery-grid img { object-fit: contain; width: 100%; border: 1px solid #ddd; }
-        [v-cloak] { display: none; }
+        body { font-size: 14px; color: #334155; }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 100; align-items: center; justify-content: center; }
+        .profile-img { object-fit: contain; background: #e2e8f0; width: 100%; height: 200px; }
+        .gallery-item { border: 1px solid #e2e8f0; padding: 2px; }
+        .sticky-top { position: sticky; top: 0; background: #f1f5f9; z-index: 10; }
     </style>
 </head>
-<body class="p-4">
+<body class="bg-slate-50">
 
-    <header class="flex items-center justify-between bg-white p-4 shadow-sm mb-4 rounded border border-gray-200">
+    <header class="bg-white p-4 shadow-sm flex items-center justify-between border-b">
         <div class="flex items-center gap-4">
-            <img src="group_pics/college-1.jpeg" alt="CEG" class="h-16 w-auto" onerror="this.src='https://via.placeholder.com/150?text=CEG+Logo'">
-            <h1 class="text-2xl font-bold text-slate-800">CEG 1977 Batch Golden Jubilee</h1>
+            <img src="group_pics/college-1.jpeg" class="h-16" onerror="this.src='https://via.placeholder.com/60'">
+            <h1 class="text-xl font-bold uppercase tracking-tight">CEG 1977 Batch Golden Jubilee</h1>
         </div>
-        <div class="flex gap-4 items-center">
-            <input type="text" id="globalSearch" placeholder="Search records..." class="border p-2 rounded w-64 text-sm outline-none focus:ring-1 focus:ring-blue-500">
-            <button onclick="toggleGallery()" class="btn-primary">Gallery</button>
+        <div class="flex gap-2">
+            <button onclick="showGallery()" class="bg-slate-800 text-white px-4 py-2 rounded">Gallery</button>
+            <input type="text" id="search" placeholder="Search data..." class="border p-2 rounded" oninput="handleFilter()">
         </div>
     </header>
 
-    <section id="main-content">
-        <div class="bg-white p-3 rounded shadow-sm border border-gray-200 mb-4 flex flex-wrap items-center gap-4">
-            <select id="filterBranch" class="border p-1 rounded text-sm"><option value="ALL">All Branches</option></select>
-            <select id="filterMonth" class="border p-1 rounded text-sm"><option value="ALL">All Months</option></select>
-            <select id="filterLetter" class="border p-1 rounded text-sm"><option value="ALL">All Letters (A-Z)</option></select>
-            <button onclick="resetFilters()" class="btn-outline text-xs">Clear Filters</button>
-            <button onclick="toggleView()" id="viewToggleBtn" class="btn-primary text-xs ml-auto">Show Card View</button>
-            <div id="recordCount" class="text-xs font-semibold text-gray-500 ml-4">Records: 0</div>
-        </div>
-
-        <div id="tableView" class="bg-white rounded border border-gray-200 overflow-hidden">
-            <div class="overflow-x-auto max-h-[600px]">
-                <table class="w-full text-left corporate-table border-collapse">
-                    <thead class="sticky-header">
-                        <tr class="text-slate-600 font-semibold uppercase text-xs tracking-wider">
-                            <th>Name</th>
-                            <th>Branch</th>
-                            <th>DOB</th>
-                            <th>Email</th>
-                            <th>Phone</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tableBody"></tbody>
-                </table>
-            </div>
-        </div>
-
-        <div id="cardView" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
-
-        <footer class="mt-4 flex justify-between items-center bg-white p-3 rounded border border-gray-200">
-            <div class="flex items-center gap-2">
-                <span class="text-xs">Show:</span>
-                <select id="pageSize" onchange="changePageSize()" class="border p-1 rounded text-xs">
-                    <option value="10">10</option>
-                    <option value="25" selected>25</option>
-                    <option value="50">50</option>
-                    <option value="100">100</option>
-                </select>
-            </div>
-            <div class="flex gap-2">
-                <button id="prevBtn" onclick="prevPage()" class="btn-outline text-xs disabled:opacity-50">Previous</button>
-                <span id="pageInfo" class="text-xs self-center">Page 1</span>
-                <button id="nextBtn" onclick="nextPage()" class="btn-outline text-xs disabled:opacity-50">Next</button>
-            </div>
-        </footer>
+    <section class="p-4 bg-white border-b flex flex-wrap gap-4 items-center">
+        <select id="branchFilter" onchange="handleFilter()" class="border p-2 rounded"><option value="ALL">All Branches</option></select>
+        <select id="monthFilter" onchange="handleFilter()" class="border p-2 rounded"><option value="ALL">All Months</option></select>
+        <select id="letterFilter" onchange="handleFilter()" class="border p-2 rounded"><option value="ALL">A-Z</option></select>
+        <button onclick="clearFilters()" class="text-blue-600 font-semibold underline">Clear Filters</button>
+        <button id="viewToggle" onclick="toggleView()" class="ml-auto bg-blue-600 text-white px-4 py-2 rounded">Show Card View</button>
     </section>
 
-    <section id="galleryScreen" class="hidden">
-        <div class="flex justify-between items-center mb-4">
-            <h2 class="text-xl font-bold">Batch Gallery</h2>
-            <button onclick="toggleGallery()" class="btn-primary">Back to Directory</button>
+    <main class="p-4">
+        <div id="tableContainer" class="bg-white shadow rounded overflow-hidden">
+            <table class="w-full text-left">
+                <thead class="sticky-top"><tr class="border-b"><th class="p-3">Name</th><th class="p-3">Branch</th><th class="p-3">DOB</th><th class="p-3">Action</th></tr></thead>
+                <tbody id="tableBody"></tbody>
+            </table>
         </div>
-        <div id="galleryContainer" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2"></div>
-    </section>
+        <div id="cardContainer" class="hidden grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+    </main>
 
-    <div id="modal1" class="hidden fixed inset-0 modal-overlay z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-            <div class="p-6">
-                <div class="flex justify-between mb-4">
-                    <h2 class="text-xl font-bold" id="m1-title">Member Details</h2>
-                    <button onclick="closeModal('modal1')" class="text-gray-500 hover:text-black text-2xl">&times;</button>
-                </div>
-                
-                <div id="m1-images" class="flex flex-row gap-2 mb-6 overflow-x-auto justify-center"></div>
-                <div id="m1-morePicsBtn" class="mb-4 text-center"></div>
+    <footer class="p-4 flex justify-between items-center bg-white border-t">
+        <select id="pageSize" onchange="changePageSize()" class="border p-2 rounded"><option>10</option><option selected>25</option><option>50</option></select>
+        <div class="flex gap-2"><button class="border p-2" onclick="changePage(-1)">Prev</button><span id="pageText" class="p-2">1</span><button class="border p-2" onclick="changePage(1)">Next</button></div>
+    </footer>
 
-                <div id="m1-content" class="space-y-2 border-t pt-4"></div>
-            </div>
+    <div id="modal1" class="modal" onclick="closeModal('modal1')">
+        <div class="bg-white p-6 rounded-lg w-full max-w-2xl" onclick="event.stopPropagation()">
+            <h2 id="m1Name" class="text-2xl font-bold mb-4"></h2>
+            <div id="m1Imgs" class="grid grid-cols-3 gap-2 mb-4"></div>
+            <div id="m1Details" class="space-y-1"></div>
+            <div id="morePicsTrigger" class="mt-4"></div>
         </div>
     </div>
 
-    <div id="modal2" class="hidden fixed inset-0 modal-overlay z-[60] flex items-center justify-center p-4">
-        <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl h-[80vh] overflow-y-auto">
-            <div class="p-6">
-                <div class="flex justify-between mb-4">
-                    <h2 class="text-xl font-bold">More Pictures</h2>
-                    <button onclick="closeModal('modal2')" class="text-gray-500 hover:text-black text-2xl">&times;</button>
-                </div>
-                <div id="m2-images" class="grid grid-cols-3 md:grid-cols-5 gap-2"></div>
-            </div>
+    <div id="modal2" class="modal" onclick="closeModal('modal2')">
+        <div class="bg-white p-6 rounded-lg w-full max-w-4xl max-h-[80vh] overflow-y-auto">
+            <div id="m2Grid" class="grid grid-cols-5 gap-2"></div>
         </div>
     </div>
 
-<script>
-    let masterData = [];
-    let filteredData = [];
-    let currentPage = 1;
-    let rowsPerPage = 25;
-    let currentView = 'table';
-    const SILHOUETTE = 'https://via.placeholder.com/150?text=No+Image';
-    const DATA_URL = 'https://script.google.com/macros/s/AKfycbzTA7wxEdOUCAhEGf9zr37FnpkOtteSWVNCy5E5YWHD6BQvbIpMmuxeZ9qLEDy_pr1adQ/exec';
+    <script>
+        let allData = [], filteredData = [], page = 1, pageSize = 25, isTableView = true;
+        const API = 'https://script.google.com/macros/s/AKfycbyYMhxBdpR0z92oBljcE_QRjF_ZqKA8asjiviXkXG6sPXzVh3j9npVisxqtNZBsCgHyBg/exec';
 
-async function init() {
-    const DATA_URL = 'https://script.google.com/macros/s/AKfycbzTA7wxEdOUCAhEGf9zr37FnpkOtteSWVNCy5E5YWHD6BQvbIpMmuxeZ9qLEDy_pr1adQ/exec';
-    
-    try {
-        const response = await fetch(DATA_URL);
-        // We use .json() because your Apps Script sends JSON, not a CSV file
-        const data = await response.json();
-        
-        // Handle potential wrappers like { "data": [...] } or just an array [...]
-        masterData = Array.isArray(data) ? data : (data.data || []);
-        
-        if (masterData.length === 0) {
-            console.error("Data received is empty. Check your Google Apps Script structure.");
-            return;
-        }
-
-        console.log("Successfully loaded", masterData.length, "records.");
-        
-        populateFilters();
-        applyFilters();
-    } catch (error) {
-        console.error("Critical Fetch Error:", error);
-        alert("Could not load data. Ensure your Apps Script is deployed as 'Me' and 'Anyone'.");
-    }
-}
-
-    // ... (Keep all other functions: populateFilters, applyFilters, renderData, etc., from the previous version) ...
-
-    // Ensure init runs on load
-    window.onload = init;
-</script>
-
-        function populateFilters() {
-            const branches = [...new Set(masterData.map(d => d.Branch_name))].sort();
-            const branchSelect = document.getElementById('filterBranch');
-            branches.forEach(b => { if(b) branchSelect.innerHTML += `<option value="${b}">${b}</option>`; });
-
-            const letters = [...new Set(masterData.map(d => d.Name.charAt(0).toUpperCase()))].sort();
-            const letterSelect = document.getElementById('filterLetter');
-            letters.forEach(l => { if(l) letterSelect.innerHTML += `<option value="${l}">${l}</option>`; });
+        async function init() {
+            const res = await fetch(API);
+            allData = await res.json();
+            filteredData = allData;
             
-            updateMonthFilter();
-        }
-
-        function updateMonthFilter() {
-            const monthsOrder = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-            const currentMonths = [...new Set(filteredData.map(d => d.Date_of_birth.split('-')[1]))]
-                .sort((a, b) => monthsOrder.indexOf(a) - monthsOrder.indexOf(b));
+            // Populating Filters
+            const branches = [...new Set(allData.map(d => d.Branch_name))].sort();
+            branches.forEach(b => document.getElementById('branchFilter').innerHTML += `<option value="${b}">${b}</option>`);
             
-            const monthSelect = document.getElementById('filterMonth');
-            const currentVal = monthSelect.value;
-            monthSelect.innerHTML = '<option value="ALL">All Months</option>';
-            currentMonths.forEach(m => { if(m) monthSelect.innerHTML += `<option value="${m}">${m}</option>`; });
-            monthSelect.value = currentVal;
+            render();
         }
 
-        function applyFilters() {
-            const branch = document.getElementById('filterBranch').value;
-            const month = document.getElementById('filterMonth').value;
-            const letter = document.getElementById('filterLetter').value;
-            const search = document.getElementById('globalSearch').value.toLowerCase();
-
-            filteredData = masterData.filter(d => {
-                const matchBranch = branch === 'ALL' || d.Branch_name === branch;
-                const matchMonth = month === 'ALL' || (d.Date_of_birth && d.Date_of_birth.includes(month));
-                const matchLetter = letter === 'ALL' || (d.Name && d.Name.startsWith(letter));
-                const matchSearch = Object.values(d).some(v => String(v).toLowerCase().includes(search));
-                return matchBranch && matchMonth && matchLetter && matchSearch;
-            });
-
-            currentPage = 1;
-            document.getElementById('recordCount').innerText = `Records: ${filteredData.length}`;
-            renderData();
+        function handleFilter() {
+            const b = document.getElementById('branchFilter').value;
+            const s = document.getElementById('search').value.toLowerCase();
+            filteredData = allData.filter(d => (b === 'ALL' || d.Branch_name === b) && d.Name.toLowerCase().includes(s));
+            page = 1;
+            render();
         }
 
-        function renderData() {
-            const start = (currentPage - 1) * rowsPerPage;
-            const end = start + rowsPerPage;
-            const pageData = filteredData.slice(start, end);
-
-            if (currentView === 'table') {
-                renderTable(pageData);
-            } else {
-                renderCards(pageData);
-            }
-            updatePagination();
-        }
-
-        function renderTable(data) {
-            const tbody = document.getElementById('tableBody');
-            tbody.innerHTML = data.map((d, index) => `
-                <tr>
-                    <td class="font-medium">${d.Name}</td>
-                    <td>${d.Branch_name}</td>
-                    <td>${d.Date_of_birth}</td>
-                    <td class="text-blue-600">${d.Email_address}</td>
-                    <td>${d.Phone_numbers}</td>
-                    <td><button onclick="showDetails('${encodeURIComponent(JSON.stringify(d))}')" class="btn-primary text-xs">View Details</button></td>
+        function render() {
+            const body = document.getElementById('tableBody');
+            const paginated = filteredData.slice((page-1)*pageSize, page*pageSize);
+            body.innerHTML = paginated.map(d => `
+                <tr class="border-b">
+                    <td class="p-3">${d.Name}</td>
+                    <td class="p-3">${d.Branch_name}</td>
+                    <td class="p-3">${d.Date_of_birth}</td>
+                    <td class="p-3"><button onclick="viewDetails('${d.Name}')" class="bg-blue-600 text-white px-2 py-1 rounded">Details</button></td>
                 </tr>
             `).join('');
+            document.getElementById('pageText').innerText = `Page ${page}`;
         }
 
-        function renderCards(data) {
-            const container = document.getElementById('cardView');
-            container.innerHTML = data.map(d => `
-                <div class="bg-white p-4 rounded border border-gray-200 shadow-sm">
-                    <div class="flex flex-row gap-1 mb-3 justify-center">
-                        <img src="individual_pics/${d.Name}-1977.jpeg" class="profile-img w-1/3" onerror="this.src='${SILHOUETTE}'">
-                        <img src="individual_pics/${d.Name}-2020.jpeg" class="profile-img w-1/3" onerror="this.src='${SILHOUETTE}'">
-                        <img src="individual_pics/${d.Name}-2027.jpeg" class="profile-img w-1/3" onerror="this.src='${SILHOUETTE}'">
-                    </div>
-                    <div class="space-y-1 mb-3">
-                        <p class="font-bold text-lg">${d.Name}</p>
-                        <p class="text-xs text-gray-600">${d.Branch_name} | ${d.Date_of_birth}</p>
-                        <p class="text-xs">${d.Email_address}</p>
-                        <p class="text-xs">${d.Phone_numbers}</p>
-                    </div>
-                    <div class="flex gap-2">
-                        <button onclick="showDetails('${encodeURIComponent(JSON.stringify(d))}')" class="btn-primary text-xs flex-1">View Details</button>
-                        <div id="card-more-${d.Name.replace(/\s/g, '')}"></div>
-                    </div>
-                </div>
-            `).join('');
-            // Async check for group pics in cards
-            data.forEach(d => checkGroupPic(d.Name, `card-more-${d.Name.replace(/\s/g, '')}`));
-        }
-
-        function showDetails(encodedData) {
-            const d = JSON.parse(decodeURIComponent(encodedData));
-            const imgDiv = document.getElementById('m1-images');
-            imgDiv.innerHTML = `
-                <img src="individual_pics/${d.Name}-1977.jpeg" class="profile-img" onerror="this.src='${SILHOUETTE}'">
-                <img src="individual_pics/${d.Name}-2020.jpeg" class="profile-img" onerror="this.src='${SILHOUETTE}'">
-                <img src="individual_pics/${d.Name}-2027.jpeg" class="profile-img" onerror="this.src='${SILHOUETTE}'">
-            `;
-
-            const content = document.getElementById('m1-content');
-            content.innerHTML = `
-                <div class="grid grid-cols-1 gap-1">
-                    <div class="flex justify-between border-b py-1"><strong>Name:</strong> <strong>${d.Name}</strong></div>
-                    <div class="flex justify-between border-b py-1"><strong>Branch:</strong> <strong>${d.Branch_name}</strong></div>
-                    ${Object.entries(d).filter(([k]) => k!=='Name' && k!=='Branch_name').map(([k,v]) => `
-                        <div class="flex justify-between border-b py-1"><span class="text-gray-600">${k.replace(/_/g,' ')}:</span><span>${v || 'N/A'}</span></div>
-                    `).join('')}
-                </div>
-            `;
+        function viewDetails(name) {
+            const d = allData.find(x => x.Name === name);
+            document.getElementById('m1Name').innerText = d.Name;
+            document.getElementById('m1Imgs').innerHTML = ['1977','2020','2027'].map(yr => 
+                `<img src="individual_pics/${name}-${yr}.jpeg" class="profile-img" onerror="this.src='https://via.placeholder.com/150'">`
+            ).join('');
+            document.getElementById('m1Details').innerHTML = Object.entries(d).map(([k,v]) => `<p><b>${k}:</b> ${v}</p>`).join('');
             
-            checkGroupPic(d.Name, 'm1-morePicsBtn', true);
-            document.getElementById('modal1').classList.remove('hidden');
+            // Logic for Modal 2 check
+            const btn = document.createElement('button');
+            btn.innerText = "Show More Pictures";
+            btn.className = "bg-green-600 text-white p-2 mt-4";
+            btn.onclick = () => openModal2(name);
+            document.getElementById('morePicsTrigger').innerHTML = '';
+            document.getElementById('morePicsTrigger').appendChild(btn);
+
+            document.getElementById('modal1').style.display = 'flex';
         }
 
-        async function checkGroupPic(name, targetId, isModal = false) {
-            const url = `group_pics/${name}-1.jpeg`;
-            const target = document.getElementById(targetId);
-            if(!target) return;
-            
-            const img = new Image();
-            img.onload = () => {
-                target.innerHTML = `<button onclick="showGroupGallery('${name}')" class="btn-outline text-xs ${isModal ? '' : 'flex-1'}">Show ${isModal ? 'More' : ''} Pictures</button>`;
-            };
-            img.src = url;
-        }
-
-        function showGroupGallery(name) {
-            const container = document.getElementById('m2-images');
-            container.innerHTML = '';
+        function openModal2(name) {
+            const grid = document.getElementById('m2Grid');
+            grid.innerHTML = '';
             for(let i=1; i<=25; i++) {
                 const img = document.createElement('img');
                 img.src = `group_pics/${name}-${i}.jpeg`;
-                img.className = 'w-full h-auto border shadow-sm';
-                img.onerror = function() { this.remove(); };
-                container.appendChild(img);
+                img.onerror = () => img.style.display = 'none';
+                grid.appendChild(img);
             }
-            document.getElementById('modal2').classList.remove('hidden');
+            document.getElementById('modal2').style.display = 'flex';
         }
 
-        function toggleGallery() {
-            const main = document.getElementById('main-content');
-            const gallery = document.getElementById('galleryScreen');
-            const container = document.getElementById('galleryContainer');
-            
-            if(gallery.classList.contains('hidden')) {
-                main.classList.add('hidden');
-                gallery.classList.remove('hidden');
-                container.innerHTML = '';
-                for(let i=1; i<=100; i++) {
-                    const img = document.createElement('img');
-                    img.src = `group_pics/group-${i}.jpeg`;
-                    img.onerror = function() { this.remove(); };
-                    container.appendChild(img);
-                }
-            } else {
-                main.classList.remove('hidden');
-                gallery.classList.add('hidden');
-            }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+        function toggleView() { 
+            isTableView = !isTableView;
+            document.getElementById('tableContainer').classList.toggle('hidden');
+            document.getElementById('cardContainer').classList.toggle('hidden');
+            document.getElementById('viewToggle').innerText = isTableView ? 'Show Card View' : 'Show Table View';
         }
-
-        function toggleView() {
-            currentView = currentView === 'table' ? 'card' : 'table';
-            document.getElementById('tableView').classList.toggle('hidden');
-            document.getElementById('cardView').classList.toggle('hidden');
-            document.getElementById('viewToggleBtn').innerText = currentView === 'table' ? 'Show Card View' : 'Show Table View';
-            renderData();
-        }
-
-        function resetFilters() {
-            document.getElementById('filterBranch').value = 'ALL';
-            document.getElementById('filterMonth').value = 'ALL';
-            document.getElementById('filterLetter').value = 'ALL';
-            document.getElementById('globalSearch').value = '';
-            applyFilters();
-        }
-
-        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
-        function prevPage() { if(currentPage > 1) { currentPage--; renderData(); } }
-        function nextPage() { if(currentPage * rowsPerPage < filteredData.length) { currentPage++; renderData(); } }
-        function changePageSize() { rowsPerPage = parseInt(document.getElementById('pageSize').value); currentPage = 1; renderData(); }
-        function updatePagination() {
-            document.getElementById('pageInfo').innerText = `Page ${currentPage}`;
-            document.getElementById('prevBtn').disabled = currentPage === 1;
-            document.getElementById('nextBtn').disabled = currentPage * rowsPerPage >= filteredData.length;
-        }
-
-        // Event Listeners
-        document.getElementById('filterBranch').addEventListener('change', applyFilters);
-        document.getElementById('filterMonth').addEventListener('change', applyFilters);
-        document.getElementById('filterLetter').addEventListener('change', applyFilters);
-        document.getElementById('globalSearch').addEventListener('input', applyFilters);
-
+        function changePage(dir) { page += dir; if(page < 1) page = 1; render(); }
+        function changePageSize() { pageSize = document.getElementById('pageSize').value; render(); }
+        function clearFilters() { document.getElementById('branchFilter').value = 'ALL'; handleFilter(); }
+        
         init();
     </script>
 </body>
