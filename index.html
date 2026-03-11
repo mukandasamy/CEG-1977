@@ -4,102 +4,99 @@
     <meta charset="UTF-8">
     <title>CEG 1977 Batch Golden Jubilee</title>
     <style>
-        body { font-family: sans-serif; font-size: 14px; background: #f8fafc; padding: 20px; }
-        .container { max-width: 1100px; margin: auto; }
-        .header { display: flex; align-items: center; justify-content: space-between; background: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
-        table { width: 100%; border-collapse: collapse; background: white; }
-        th, td { padding: 12px; border: 1px solid #e2e8f0; text-align: left; }
-        th { background: #004a99; color: white; }
-        .btn { padding: 8px 12px; cursor: pointer; background: #004a99; color: white; border: none; border-radius: 4px; }
+        /* Corporate-grade CSS */
+        body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 14px; color: #333; background: #f4f7f6; margin: 0; padding: 20px; }
+        .container { max-width: 1200px; margin: auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .header { display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #004a99; padding-bottom: 15px; margin-bottom: 20px; }
+        .filter-bar { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #004a99; color: white; padding: 12px; text-align: left; }
+        td { padding: 12px; border-bottom: 1px solid #ddd; }
+        .btn { padding: 8px 16px; background: #004a99; color: white; border: none; cursor: pointer; border-radius: 4px; }
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); align-items: center; justify-content: center; z-index: 1000; }
-        .modal-content { background: white; padding: 25px; width: 700px; max-height: 85vh; overflow-y: auto; border-radius: 8px; }
+        .modal-content { background: white; padding: 30px; border-radius: 8px; width: 700px; max-height: 85vh; overflow-y: auto; }
+        .card-view { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="header">
-        <div style="display:flex; align-items:center; gap:15px;">
-            <img src="group_pics/college-1.jpeg" style="height:60px;" onerror="this.src='https://via.placeholder.com/100'">
+    <header class="header">
+        <div style="display:flex; align-items:center; gap:20px;">
+            <img src="group_pics/college-1.jpeg" style="height:70px;" onerror="this.src='https://via.placeholder.com/100'">
             <h1>CEG 1977 Batch Golden Jubilee</h1>
         </div>
         <div>
-            <button class="btn" onclick="alert('Gallery Feature Pending')">Gallery</button>
-            <input type="text" id="search" placeholder="Search..." oninput="app.render()">
+            <button class="btn" onclick="showGallery()">Gallery</button>
+            <input type="text" id="search" placeholder="Search across all fields..." oninput="updateApp()" style="padding:8px; width:250px;">
         </div>
+    </header>
+
+    <div class="filter-bar">
+        <select id="branchFilter" onchange="updateApp()"><option value="ALL">All Branches</option></select>
+        <select id="monthFilter" onchange="updateApp()"><option value="ALL">All Months</option></select>
+        <select id="letterFilter" onchange="updateApp()"><option value="ALL">A-Z</option></select>
+        <button class="btn" onclick="clearFilters()">Clear Filters</button>
+        <button class="btn" onclick="toggleView()" id="viewToggle">Show Card View</button>
+        <span id="recordCount" style="margin-left:auto; font-weight:bold;"></span>
     </div>
 
-    <select id="branchFilter" onchange="app.render()"><option value="ALL">All Branches</option></select>
-    
-    <table id="dataTable">
-        <thead><tr><th>Name</th><th>Branch</th><th>DOB</th><th>Action</th></tr></thead>
-        <tbody id="tableBody"></tbody>
-    </table>
+    <div id="tableWrapper"><table id="dataTable"><thead><tr><th>Name</th><th>Branch</th><th>DOB</th><th>Action</th></tr></thead><tbody id="tableBody"></tbody></table></div>
+    <div id="cardWrapper" class="card-view hidden"></div>
 </div>
 
-<div id="modal" class="modal" onclick="document.getElementById('modal').style.display='none'">
-    <div class="modal-content" onclick="event.stopPropagation()" id="modalBody"></div>
-</div>
+<div id="modal1" class="modal" onclick="closeModal('modal1')"><div class="modal-content" onclick="event.stopPropagation()" id="modal1Body"></div></div>
+<div id="modal2" class="modal" onclick="closeModal('modal2')"><div class="modal-content" id="modal2Body"></div></div>
 
 <script>
-const app = {
-    data: [],
-    formatDate(dStr) {
-        if (!dStr) return "";
-        if (dStr.includes('T')) return dStr.split('T')[0];
-        return dStr;
-    },
-    async init() {
+    let appData = [];
+    let isTable = true;
+    const url = 'https://script.google.com/macros/s/AKfycbyYMhxBdpR0z92oBljcE_QRjF_ZqKA8asjiviXkXG6sPXzVh3j9npVisxqtNZBsCgHyBg/exec';
+
+    async function init() {
         try {
-            const res = await fetch('https://script.google.com/macros/s/AKfycbyYMhxBdpR0z92oBljcE_QRjF_ZqKA8asjiviXkXG6sPXzVh3j9npVisxqtNZBsCgHyBg/exec');
-            this.data = await res.json();
-            const branches = [...new Set(this.data.map(d => d.Branch))].filter(Boolean);
-            const select = document.getElementById('branchFilter');
-            branches.forEach(b => select.innerHTML += `<option value="${b}">${b}</option>`);
-            this.render();
-        } catch (e) { console.error(e); }
-    },
-    render() {
-        const tbody = document.getElementById('tableBody');
-        const branch = document.getElementById('branchFilter').value;
-        const search = document.getElementById('search').value.toLowerCase();
-        
-        const filtered = this.data.filter(d => 
-            (branch === 'ALL' || d.Branch === branch) && 
-            (d.Name.toLowerCase().includes(search))
-        );
-        
-        tbody.innerHTML = filtered.map(d => `
-            <tr>
-                <td>${d.Name || ''}</td>
-                <td>${d.Branch || ''}</td>
-                <td>${this.formatDate(d.Date_of_birth)}</td>
-                <td><button class="btn" onclick="openDetails('${d.Name}')">View Details</button></td>
-            </tr>
-        `).join('');
+            const res = await fetch(url);
+            appData = await res.json();
+            populateFilters();
+            updateApp();
+        } catch (e) { console.error("Data Load Error:", e); }
     }
-};
 
-function openDetails(name) {
-    const d = app.data.find(x => x.Name === name);
-    if (!d) return;
+    function populateFilters() {
+        const branches = [...new Set(appData.map(d => d.Branch))].filter(Boolean);
+        const sel = document.getElementById('branchFilter');
+        branches.forEach(b => sel.innerHTML += `<option value="${b}">${b}</option>`);
+    }
 
-    let html = `<div style="display:flex; gap:10px; margin-bottom:15px;">
-        ${['1977','2020','2027'].map(y => `<img src="individual_pics/${name}-${y}.jpeg" style="width:150px; height:auto;" onerror="this.src='https://via.placeholder.com/150'">`).join('')}
-    </div><h3>${d.Name}</h3>`;
+    function updateApp() {
+        const search = document.getElementById('search').value.toLowerCase();
+        const branch = document.getElementById('branchFilter').value;
+        const filtered = appData.filter(d => (branch === 'ALL' || d.Branch === branch) && (Object.values(d).some(v => String(v).toLowerCase().includes(search))));
+        
+        document.getElementById('recordCount').innerText = `Total: ${filtered.length}`;
+        document.getElementById('tableBody').innerHTML = filtered.map(d => `<tr><td>${d.Name}</td><td>${d.Branch}</td><td>${d.Date_of_birth}</td><td><button class="btn" onclick="openDetails('${d.Name}')">View</button></td></tr>`).join('');
+    }
 
-    // Dynamic field generation
-    Object.entries(d).forEach(([key, val]) => {
-        if (key !== 'Name') {
-            html += `<p><strong>${key.replace(/_/g, ' ')}:</strong> ${val || 'N/A'}</p>`;
-        }
-    });
+    function openDetails(name) {
+        const d = appData.find(x => x.Name === name);
+        let html = `<h3>${d.Name}</h3><div style="display:flex; gap:10px;">
+            ${['1977','2020','2027'].map(y => `<img src="individual_pics/${name}-${y}.jpeg" style="width:100px; height:auto;" onerror="this.style.display='none'">`).join('')}
+        </div>`;
+        
+        // Explicit mapping of your 13 fields
+        const fields = ['Branch', 'Date_of_birth', 'Email_address', 'Phone_numbers', 'Address', 'Spouse_name', 'Anniversary_date', 'Children_details', 'Qualification', 'Company_designation', 'Company_worked', 'Company_phone_email'];
+        fields.forEach(f => html += `<p><strong>${f.replace(/_/g, ' ')}:</strong> ${d[f] || 'N/A'}</p>`);
+        
+        document.getElementById('modal1Body').innerHTML = html + `<button class="btn" onclick="closeModal('modal1')">Close</button>`;
+        document.getElementById('modal1').style.display = 'flex';
+    }
 
-    document.getElementById('modalBody').innerHTML = html + `<button class="btn" onclick="document.getElementById('modal').style.display='none'">Close</button>`;
-    document.getElementById('modal').style.display = 'flex';
-}
+    function toggleView() { isTable = !isTable; document.getElementById('tableWrapper').classList.toggle('hidden'); document.getElementById('cardWrapper').classList.toggle('hidden'); }
+    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+    function showGallery() { alert("Gallery View Logic"); }
+    function clearFilters() { document.getElementById('branchFilter').value = 'ALL'; updateApp(); }
 
-window.onload = () => app.init();
+    window.onload = init;
 </script>
 </body>
 </html>
