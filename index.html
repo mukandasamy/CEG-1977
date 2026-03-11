@@ -2,83 +2,81 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>CEG 1977 Batch Directory</title>
+    <title>CEG 1977 Batch Golden Jubilee</title>
     <style>
-        body { font-family: sans-serif; font-size: 14px; background: #f8fafc; padding: 20px; }
-        .container { max-width: 1000px; margin: auto; }
-        .flex-box { display: flex; gap: 10px; margin-bottom: 20px; align-items: center; }
+        :root { --primary: #004a99; --bg: #f8fafc; --border: #e2e8f0; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 14px; background: var(--bg); margin: 0; padding: 10px; }
+        .sticky-head { position: sticky; top: 0; background: #e2e8f0; }
+        .btn { padding: 6px 12px; cursor: pointer; background: var(--primary); color: white; border: none; border-radius: 4px; }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 1000; align-items: center; justify-content: center; }
+        .modal-content { background: white; padding: 20px; width: 800px; max-height: 90vh; overflow-y: auto; border-radius: 4px; }
+        .img-row { display: flex; gap: 10px; margin-bottom: 15px; }
         table { width: 100%; border-collapse: collapse; background: white; }
-        th, td { padding: 12px; border: 1px solid #e2e8f0; text-align: left; }
-        th { background: #004a99; color: white; }
-        .card-view { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 15px; }
-        .card { background: white; padding: 15px; border: 1px solid #e2e8f0; border-radius: 8px; }
-        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; }
-        .modal-box { background: white; padding: 25px; border-radius: 8px; width: 400px; }
-        .btn { padding: 8px 12px; cursor: pointer; background: #004a99; color: white; border: none; border-radius: 4px; }
-        .hidden { display: none; }
+        th, td { padding: 10px; border: 1px solid var(--border); text-align: left; }
+        .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h2>CEG 1977 Batch Golden Jubilee</h2>
-    <div class="flex-box">
-        <input type="text" id="search" placeholder="Search..." oninput="updateView()">
-        <select id="branchFilter" onchange="updateView()"><option value="ALL">All Branches</option></select>
-        <button class="btn" onclick="toggleView()">Toggle View</button>
+<header style="display:flex; justify-content:space-between; padding:10px; background:white; margin-bottom:10px;">
+    <div style="display:flex; align-items:center; gap:10px;">
+        <img src="group_pics/college-1.jpeg" style="height:50px;" onerror="this.src='https://via.placeholder.com/50'">
+        <h1 style="margin:0;">CEG 1977 Batch Golden Jubilee</h1>
+    </div>
+    <div>
+        <button class="btn" onclick="showGallery()">Gallery</button>
+        <input type="text" id="search" placeholder="Search..." oninput="app.render()">
+    </div>
+</header>
+
+<div id="mainSection">
+    <div style="margin-bottom:10px;">
+        <select id="branchFilter" onchange="app.render()"><option value="ALL">All Branches</option></select>
+        <select id="monthFilter" onchange="app.render()"><option value="ALL">All Months</option></select>
+        <select id="letterFilter" onchange="app.render()"><option value="ALL">A-Z</option></select>
+        <button onclick="app.clearFilters()">Clear</button>
+        <button class="btn" onclick="app.toggleView()" id="viewBtn">Show Card View</button>
+        <span id="recordCount" style="float:right;"></span>
     </div>
 
-    <div id="tableContainer"><table id="dataTable"><thead><tr><th>Name</th><th>Branch</th><th>Action</th></tr></thead><tbody id="tableBody"></tbody></table></div>
-    <div id="cardContainer" class="card-view hidden"></div>
+    <div id="tableContainer"><table id="dataTable"><thead class="sticky-head"><tr><th>Name</th><th>Branch</th><th>DOB</th><th>Action</th></tr></thead><tbody id="tableBody"></tbody></table></div>
+    <div id="cardContainer" class="card-grid" style="display:none;"></div>
 </div>
 
-<div id="modal" class="modal" onclick="closeModal()"><div class="modal-box" onclick="event.stopPropagation()"><div id="modalContent"></div><button class="btn" onclick="closeModal()">Close</button></div></div>
+<div id="modal1" class="modal" onclick="closeModal('modal1')"><div class="modal-content" onclick="event.stopPropagation()"><div id="modal1Content"></div></div></div>
+<div id="modal2" class="modal" onclick="closeModal('modal2')"><div class="modal-content" id="modal2Content"></div></div>
 
 <script>
-    let allData = [];
-    let isTable = true;
-
-    async function init() {
-        try {
-            const res = await fetch('https://script.google.com/macros/s/AKfycbyYMhxBdpR0z92oBljcE_QRjF_ZqKA8asjiviXkXG6sPXzVh3j9npVisxqtNZBsCgHyBg/exec');
-            allData = await res.json();
-            
-            // Populate Filters
-            const branches = [...new Set(allData.map(d => d.Branch_name))];
-            const select = document.getElementById('branchFilter');
-            branches.forEach(b => select.innerHTML += `<option value="${b}">${b}</option>`);
-            
-            updateView();
-        } catch (e) { console.error("Init Error:", e); }
+const app = {
+    data: [], view: 'table', page: 1, pageSize: 25,
+    async init() {
+        const res = await fetch('https://script.google.com/macros/s/AKfycbyYMhxBdpR0z92oBljcE_QRjF_ZqKA8asjiviXkXG6sPXzVh3j9npVisxqtNZBsCgHyBg/exec');
+        this.data = await res.json();
+        this.render();
+    },
+    render() {
+        const filtered = this.data; // Add filtering logic here
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = filtered.map(d => `<tr><td>${d.Name}</td><td>${d.Branch_name}</td><td>${d.Date_of_birth}</td><td><button class="btn" onclick="app.viewDetails('${d.Name}')">View Details</button></td></tr>`).join('');
+    },
+    viewDetails(name) {
+        const d = this.data.find(x => x.Name === name);
+        document.getElementById('modal1Content').innerHTML = `
+            <div class="img-row">${['1977','2020','2027'].map(y => `<img src="individual_pics/${name}-${y}.jpeg" onerror="this.src='https://via.placeholder.com/150'">`).join('')}</div>
+            <div><strong>Name:</strong> ${d.Name}</div>
+            <button class="btn" onclick="app.showMore('${name}')">Show More Pictures</button>
+        `;
+        document.getElementById('modal1').style.display = 'flex';
+    },
+    toggleView() {
+        this.view = this.view === 'table' ? 'card' : 'table';
+        document.getElementById('tableContainer').style.display = this.view === 'table' ? 'block' : 'none';
+        document.getElementById('cardContainer').style.display = this.view === 'card' ? 'grid' : 'none';
     }
+};
 
-    function updateView() {
-        const search = document.getElementById('search').value.toLowerCase();
-        const branch = document.getElementById('branchFilter').value;
-        const filtered = allData.filter(d => (branch === 'ALL' || d.Branch_name === branch) && d.Name.toLowerCase().includes(search));
-        
-        const body = document.getElementById('tableBody');
-        const cards = document.getElementById('cardContainer');
-        
-        body.innerHTML = filtered.map(d => `<tr><td>${d.Name}</td><td>${d.Branch_name}</td><td><button class="btn" onclick="openModal('${d.Name}')">View</button></td></tr>`).join('');
-        cards.innerHTML = filtered.map(d => `<div class="card"><strong>${d.Name}</strong><p>${d.Branch_name}</p><button class="btn" onclick="openModal('${d.Name}')">View</button></div>`).join('');
-    }
-
-    function toggleView() {
-        isTable = !isTable;
-        document.getElementById('tableContainer').classList.toggle('hidden', !isTable);
-        document.getElementById('cardContainer').classList.toggle('hidden', isTable);
-    }
-
-    function openModal(name) {
-        const d = allData.find(x => x.Name === name);
-        document.getElementById('modalContent').innerHTML = `<h3>${d.Name}</h3><p>Branch: ${d.Branch_name}</p><p>Email: ${d.Email_address}</p>`;
-        document.getElementById('modal').style.display = 'flex';
-    }
-
-    function closeModal() { document.getElementById('modal').style.display = 'none'; }
-
-    window.onload = init;
+window.onload = () => app.init();
+function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 </script>
 </body>
 </html>
