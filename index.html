@@ -7,17 +7,14 @@
 <style>
 
 :root{
---primary:#1e40af;
+--blue:#1d4ed8;
 --border:#e5e7eb;
---bg:#f8fafc;
 }
 
 body{
 font-family:Arial,Helvetica,sans-serif;
 font-size:14px;
 margin:12px;
-background:white;
-color:#111;
 }
 
 header{
@@ -35,22 +32,14 @@ height:70px;
 h1{
 margin:0;
 font-size:22px;
-font-weight:600;
-}
-
-#search{
-margin-left:auto;
-padding:6px 8px;
-border:1px solid var(--border);
-border-radius:4px;
-width:240px;
 }
 
 button{
-background:var(--primary);
+background:var(--blue);
 color:white;
 border:none;
-padding:6px 10px;
+padding:8px 14px;
+font-size:15px;
 border-radius:4px;
 cursor:pointer;
 }
@@ -59,30 +48,36 @@ button:hover{
 opacity:.9;
 }
 
+#search{
+margin-left:auto;
+padding:7px;
+width:240px;
+border:1px solid var(--border);
+}
+
 #filters{
-margin-top:12px;
 display:flex;
-align-items:center;
 gap:10px;
+align-items:center;
+margin-top:10px;
 }
 
 #filters select{
-padding:6px;
 background:#2563eb;
 color:white;
 border:none;
-border-radius:4px;
+padding:6px;
+font-size:14px;
 }
 
 #recordCount{
 margin-left:auto;
-color:#444;
 }
 
 table{
 width:100%;
 border-collapse:collapse;
-margin-top:12px;
+margin-top:10px;
 }
 
 th,td{
@@ -105,9 +100,7 @@ margin-top:14px;
 
 .card{
 border:1px solid var(--border);
-border-radius:6px;
 padding:8px;
-background:white;
 }
 
 .cardImages{
@@ -116,11 +109,11 @@ gap:6px;
 margin-bottom:6px;
 }
 
-.gallery{
-display:grid;
-grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
-gap:12px;
-margin-top:20px;
+.footer{
+margin-top:12px;
+display:flex;
+gap:10px;
+align-items:center;
 }
 
 .modal{
@@ -131,6 +124,7 @@ left:0;
 width:100%;
 height:100%;
 background:rgba(0,0,0,.55);
+z-index:999;
 }
 
 .modalContent{
@@ -140,7 +134,6 @@ padding:18px;
 width:85%;
 max-height:85%;
 overflow:auto;
-border-radius:6px;
 }
 
 .modalImages{
@@ -149,15 +142,10 @@ gap:10px;
 margin-bottom:12px;
 }
 
-.footer{
-margin-top:10px;
-display:flex;
-align-items:center;
-gap:10px;
-}
-
-.footer select{
-padding:5px;
+.galleryGrid{
+display:grid;
+grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+gap:12px;
 }
 
 </style>
@@ -173,7 +161,7 @@ padding:5px;
 
 <button onclick="openGallery()">Gallery</button>
 
-<input id="search" placeholder="Search name, branch, company, phone...">
+<input id="search" placeholder="Search directory">
 
 </header>
 
@@ -185,7 +173,6 @@ padding:5px;
 <select id="alphaFilter"></select>
 
 <button onclick="clearFilters()">Clear Filters</button>
-
 <button onclick="toggleView()">Show Card View</button>
 
 <div id="recordCount"></div>
@@ -207,9 +194,7 @@ padding:5px;
 </select>
 
 <button onclick="prevPage()">Prev</button>
-
 <span id="pageInfo"></span>
-
 <button onclick="nextPage()">Next</button>
 
 </div>
@@ -219,11 +204,22 @@ padding:5px;
 <div class="modalContent" id="modalBody"></div>
 </div>
 
+
 <div id="modal2" class="modal">
 <div class="modalContent" id="groupPics"></div>
 </div>
 
-<div id="galleryPage" style="display:none"></div>
+
+<div id="galleryModal" class="modal">
+<div class="modalContent">
+
+<button onclick="closeGallery()">Close Gallery</button>
+
+<div id="galleryGrid" class="galleryGrid"></div>
+
+</div>
+</div>
+
 
 
 <script>
@@ -235,13 +231,16 @@ let filtered=[]
 let page=1
 let cardMode=false
 
-const monthOrder=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
+const months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
 
-const placeholder="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEyMCIgdmlld0JveD0iMCAwIDEwMCAxMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwMCIgaGVpZ2h0PSIxMjAiIGZpbGw9IiNlZWUiLz48Y2lyY2xlIGN4PSI1MCIgY3k9IjM1IiByPSIyMCIgZmlsbD0iI2NjYyIvPjxyZWN0IHg9IjIwIiB5PSI2NSIgd2lkdGg9IjYwIiBoZWlnaHQ9IjM1IiBmaWxsPSIjY2NjIi8+PC9zdmc+"
+function encodeName(n){
+return encodeURIComponent(n)
+}
 
-
-function encodeName(name){
-return encodeURIComponent(name)
+function formatDOB(d){
+if(!d) return ""
+const p=d.split("-")
+return p[0]+"-"+p[1]
 }
 
 async function loadData(){
@@ -265,12 +264,12 @@ const branches=[...new Set(data.map(d=>d.Branch))].sort()
 branchFilter.innerHTML="<option value='ALL'>All Branches</option>"
 branches.forEach(b=>branchFilter.innerHTML+=`<option>${b}</option>`)
 
-const months=[...new Set(data.map(d=>d.Date_of_birth.split("-")[1]))]
+const monthsPresent=[...new Set(data.map(d=>d.Date_of_birth.split("-")[1]))]
 
-months.sort((a,b)=>monthOrder.indexOf(a)-monthOrder.indexOf(b))
+monthsPresent.sort((a,b)=>months.indexOf(a)-months.indexOf(b))
 
 monthFilter.innerHTML="<option value='ALL'>All Months</option>"
-months.forEach(m=>monthFilter.innerHTML+=`<option>${m}</option>`)
+monthsPresent.forEach(m=>monthFilter.innerHTML+=`<option>${m}</option>`)
 
 const letters=[...new Set(data.map(d=>d.Name[0].toUpperCase()))].sort()
 
@@ -291,9 +290,7 @@ filtered=data.filter(d=>{
 if(b!=="ALL" && d.Branch!==b) return false
 if(m!=="ALL" && d.Date_of_birth.split("-")[1]!==m) return false
 if(a!=="ALL" && d.Name[0].toUpperCase()!==a) return false
-
-if(s && !Object.values(d).join(" ").toLowerCase().includes(s))
-return false
+if(s && !Object.values(d).join(" ").toLowerCase().includes(s)) return false
 
 return true
 
@@ -317,14 +314,15 @@ alphaFilter.value="ALL"
 search.value=""
 
 filtered=[...data]
-
 render()
 
 }
 
 function pageSize(){
-return parseInt(document.getElementById("pageSize").value)
+return parseInt(pageSizeSelect.value||10)
 }
+
+const pageSizeSelect=document.getElementById("pageSize")
 
 function paginate(){
 
@@ -358,7 +356,7 @@ html+=`
 <tr>
 <td>${r.Name}</td>
 <td>${r.Branch}</td>
-<td>${r.Date_of_birth}</td>
+<td>${formatDOB(r.Date_of_birth)}</td>
 <td>${r.Email_address||""}</td>
 <td>${r.Phone_numbers||""}</td>
 <td><button onclick="showDetails(${index})">View Details</button></td>
@@ -389,15 +387,15 @@ html+=`
 
 <div class="cardImages">
 
-<img src="individual_pics/${encodeName(r.Name)}-1977.jpeg" onerror="this.src='${placeholder}'">
-<img src="individual_pics/${encodeName(r.Name)}-2020.jpeg" onerror="this.src='${placeholder}'">
-<img src="individual_pics/${encodeName(r.Name)}-2027.jpeg" onerror="this.src='${placeholder}'">
+<img src="individual_pics/${encodeName(r.Name)}-1977.jpeg" onerror="this.style.display='none'">
+<img src="individual_pics/${encodeName(r.Name)}-2020.jpeg" onerror="this.style.display='none'">
+<img src="individual_pics/${encodeName(r.Name)}-2027.jpeg" onerror="this.style.display='none'">
 
 </div>
 
 <b>${r.Name}</b><br>
 ${r.Branch}<br>
-${r.Date_of_birth}<br>
+${formatDOB(r.Date_of_birth)}<br>
 ${r.Email_address||""}<br>
 ${r.Phone_numbers||""}<br>
 
@@ -433,17 +431,12 @@ pageInfo.innerText="Page "+page+" / "+(total||1)
 }
 
 function prevPage(){
-
 if(page>1){page--;render()}
-
 }
 
 function nextPage(){
-
 const total=Math.ceil(filtered.length/pageSize())
-
 if(page<total){page++;render()}
-
 }
 
 function showDetails(i){
@@ -454,9 +447,9 @@ let html=`
 
 <div class="modalImages">
 
-<img src="individual_pics/${encodeName(r.Name)}-1977.jpeg" onerror="this.src='${placeholder}'">
-<img src="individual_pics/${encodeName(r.Name)}-2020.jpeg" onerror="this.src='${placeholder}'">
-<img src="individual_pics/${encodeName(r.Name)}-2027.jpeg" onerror="this.src='${placeholder}'">
+<img src="individual_pics/${encodeName(r.Name)}-1977.jpeg" onerror="this.style.display='none'">
+<img src="individual_pics/${encodeName(r.Name)}-2020.jpeg" onerror="this.style.display='none'">
+<img src="individual_pics/${encodeName(r.Name)}-2027.jpeg" onerror="this.style.display='none'">
 
 </div>
 `
@@ -494,7 +487,7 @@ modal2.style.display="block"
 
 function openGallery(){
 
-let html="<div class='gallery'>"
+let html=""
 
 for(let i=1;i<=100;i++){
 
@@ -502,11 +495,14 @@ html+=`<img src="group_pics/group-${i}.jpeg" onerror="this.style.display='none'"
 
 }
 
-html+="</div>"
+galleryGrid.innerHTML=html
 
-galleryPage.innerHTML=html
-galleryPage.style.display="block"
+galleryModal.style.display="block"
 
+}
+
+function closeGallery(){
+galleryModal.style.display="none"
 }
 
 window.onclick=function(e){
