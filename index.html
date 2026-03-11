@@ -1,14 +1,16 @@
 <!DOCTYPE html>
 <html>
+
 <head>
 <meta charset="UTF-8">
+
 <title>CEG 1977 Batch Golden Jubilee</title>
 
 <style>
 
 body{
 font-family:Arial;
-margin:14px;
+margin:16px;
 font-size:14px;
 }
 
@@ -41,7 +43,6 @@ cursor:pointer;
 
 button:disabled{
 opacity:.4;
-cursor:default;
 }
 
 #search{
@@ -135,20 +136,21 @@ cursor:pointer;
 }
 
 .galleryGrid{
-display:grid;
-grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
-gap:14px;
+display:flex;
+flex-wrap:wrap;
+gap:12px;
 }
 
 .galleryGrid img{
-width:100%;
-height:auto;
+display:block;
 }
 
 </style>
 </head>
 
+
 <body>
+
 
 <header>
 
@@ -162,7 +164,9 @@ height:auto;
 
 </header>
 
+
 <div id="loadingMessage">Loading directory...</div>
+
 
 <div id="filters" style="display:none">
 
@@ -171,14 +175,17 @@ height:auto;
 <select id="alphaFilter"></select>
 
 <button onclick="clearFilters()">Clear Filters</button>
+
 <button id="viewBtn" onclick="toggleView()">Show Card View</button>
 
 <div id="recordCount"></div>
 
 </div>
 
+
 <div id="tableView"></div>
 <div id="cardView" style="display:none"></div>
+
 
 <div class="footer">
 
@@ -197,7 +204,9 @@ height:auto;
 
 </div>
 
+
 <div id="modal1" class="modal">
+
 <div class="modalContent">
 
 <span class="closeX" onclick="modal1.style.display='none'">×</span>
@@ -207,9 +216,12 @@ height:auto;
 <button onclick="modal1.style.display='none'">Close</button>
 
 </div>
+
 </div>
 
+
 <div id="galleryModal" class="modal">
+
 <div class="modalContent">
 
 <span class="closeX" onclick="closeGallery()">×</span>
@@ -221,7 +233,9 @@ height:auto;
 <button onclick="closeGallery()">Close</button>
 
 </div>
+
 </div>
+
 
 <script>
 
@@ -234,64 +248,93 @@ let cardMode=false
 
 const months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
 
+
 function encodeName(n){
+
 return encodeURIComponent(n)
+
 }
 
+
 function formatDOB(d){
+
 if(!d) return ""
-const p=d.split("-")
+
+let p=d.split("-")
+
 return p[0]+"-"+p[1]
+
 }
+
 
 async function loadData(){
 
 const res=await fetch(url)
+
 data=await res.json()
 
 filtered=[...data]
 
-initFilters()
+buildFilters()
 
 loadingMessage.style.display="none"
+
 filters.style.display="flex"
 
 render()
 
 }
 
-function initFilters(){
 
-const branches=[...new Set(data.map(d=>d.Branch))].sort()
+
+function buildFilters(){
+
+const branches=[...new Set(filtered.map(x=>x.Branch))].sort()
 
 branchFilter.innerHTML="<option value='ALL'>All Branches</option>"
-branches.forEach(b=>branchFilter.innerHTML+=`<option value="${b}">${b}</option>`)
 
-const monthSet=new Set(data.map(d=>d.Date_of_birth.split("-")[1]))
+branches.forEach(b=>branchFilter.innerHTML+=`<option>${b}</option>`)
 
-const monthList=months.filter(m=>monthSet.has(m))
+
+
+const monthsPresent=[...new Set(filtered.map(x=>x.Date_of_birth.split("-")[1]))]
+
+monthsPresent.sort((a,b)=>months.indexOf(a)-months.indexOf(b))
 
 monthFilter.innerHTML="<option value='ALL'>All Months</option>"
-monthList.forEach(m=>monthFilter.innerHTML+=`<option value="${m}">${m}</option>`)
 
-const letters=[...new Set(data.map(d=>d.Name[0].toUpperCase()))].sort()
+monthsPresent.forEach(m=>monthFilter.innerHTML+=`<option>${m}</option>`)
+
+
+
+const letters=[...new Set(filtered.map(x=>x.Name[0].toUpperCase()))].sort()
 
 alphaFilter.innerHTML="<option value='ALL'>All Letters</option>"
-letters.forEach(a=>alphaFilter.innerHTML+=`<option value="${a}">${a}</option>`)
+
+letters.forEach(a=>alphaFilter.innerHTML+=`<option>${a}</option>`)
 
 }
+
+
 
 function applyFilters(){
 
 const b=branchFilter.value
+
 const m=monthFilter.value
+
 const a=alphaFilter.value
+
 const s=search.value.toLowerCase()
+
+
 
 filtered=data.filter(d=>{
 
 if(b!=="ALL" && d.Branch!==b) return false
+
 if(m!=="ALL" && d.Date_of_birth.split("-")[1]!==m) return false
+
 if(a!=="ALL" && d.Name[0].toUpperCase()!==a) return false
 
 if(s && !Object.values(d).join(" ").toLowerCase().includes(s)) return false
@@ -300,196 +343,378 @@ return true
 
 })
 
+
+
 page=1
+
+buildFilters()
+
 render()
 
 }
 
+
+
 branchFilter.onchange=applyFilters
+
 monthFilter.onchange=applyFilters
+
 alphaFilter.onchange=applyFilters
+
 search.oninput=applyFilters
+
+
 
 function clearFilters(){
 
-branchFilter.value="ALL"
-monthFilter.value="ALL"
-alphaFilter.value="ALL"
 search.value=""
+
+branchFilter.value="ALL"
+
+monthFilter.value="ALL"
+
+alphaFilter.value="ALL"
+
+
 
 filtered=[...data]
 
+buildFilters()
+
 render()
 
 }
+
+
 
 function pageSize(){
+
 return parseInt(document.getElementById("pageSize").value)
+
 }
 
+
+
 pageSize.onchange=function(){
+
 page=1
+
 render()
+
 }
+
+
 
 function paginate(){
 
 const start=(page-1)*pageSize()
+
 return filtered.slice(start,start+pageSize())
 
 }
+
+
 
 function render(){
 
 recordCount.innerText=filtered.length+" records"
 
+
+
 if(cardMode) renderCards()
+
 else renderTable()
+
+
 
 updatePagination()
 
 }
 
+
+
 function renderTable(){
 
 const rows=paginate()
 
+
+
 let html="<table><thead><tr><th>Name</th><th>Branch</th><th>DOB</th><th>Email</th><th>Phone</th><th>Action</th></tr></thead><tbody>"
+
+
 
 rows.forEach((r,i)=>{
 
 const idx=(page-1)*pageSize()+i
 
+
+
 html+=`
+
 <tr>
+
 <td>${r.Name}</td>
+
 <td>${r.Branch}</td>
+
 <td>${formatDOB(r.Date_of_birth)}</td>
+
 <td>${r.Email_address||""}</td>
+
 <td>${r.Phone_numbers||""}</td>
+
 <td><button onclick="showDetails(${idx})">View Details</button></td>
+
 </tr>
+
 `
 
 })
 
+
+
 html+="</tbody></table>"
+
+
 
 tableView.innerHTML=html
 
 }
 
+
+
 function renderCards(){
 
 const rows=paginate()
 
+
+
 let html="<div class='cardGrid'>"
 
+
+
 rows.forEach(r=>{
+
+
 
 html+=`
 
 <div class="card">
 
+
+
 <div class="cardImages">
 
 <img src="individual_pics/${encodeName(r.Name)}-1977.jpeg" onerror="this.style.display='none'">
+
 <img src="individual_pics/${encodeName(r.Name)}-2020.jpeg" onerror="this.style.display='none'">
+
 <img src="individual_pics/${encodeName(r.Name)}-2027.jpeg" onerror="this.style.display='none'">
 
 </div>
 
+
+
 <b>${r.Name}</b><br>
+
 ${r.Branch}<br>
+
 ${formatDOB(r.Date_of_birth)}<br>
+
 ${r.Email_address||""}<br>
+
 ${r.Phone_numbers||""}
 
+
+
 </div>
+
 `
 
 })
 
+
+
 html+="</div>"
+
+
 
 cardView.innerHTML=html
 
 }
 
+
+
 function toggleView(){
 
 cardMode=!cardMode
 
+
+
 tableView.style.display=cardMode?"none":"block"
+
 cardView.style.display=cardMode?"block":"none"
 
+
+
 viewBtn.innerText=cardMode?"Show Table View":"Show Card View"
+
+
 
 render()
 
 }
 
+
+
 function updatePagination(){
 
 const total=Math.ceil(filtered.length/pageSize())
 
+
+
 pageInfo.innerText="Page "+page+" / "+(total||1)
 
+
+
 prevBtn.disabled=(page===1)
+
 nextBtn.disabled=(page===total)
 
 }
 
+
+
 function prevPage(){
-if(page>1){page--;render()}
+
+if(page>1){
+
+page--
+
+render()
+
 }
 
-function nextPage(){
-const total=Math.ceil(filtered.length/pageSize())
-if(page<total){page++;render()}
 }
+
+
+
+function nextPage(){
+
+const total=Math.ceil(filtered.length/pageSize())
+
+
+
+if(page<total){
+
+page++
+
+render()
+
+}
+
+}
+
+
 
 function showDetails(i){
 
 const r=filtered[i]
 
+
+
 let html=`
+
+
+
+<img src="individual_pics/${encodeName(r.Name)}-1977.jpeg" onerror="this.style.display='none'">
+
+<img src="individual_pics/${encodeName(r.Name)}-2020.jpeg" onerror="this.style.display='none'">
+
+<img src="individual_pics/${encodeName(r.Name)}-2027.jpeg" onerror="this.style.display='none'">
+
+
+
+<br><br>
+
+
+
 <b>${r.Name}</b><br>
+
 ${r.Branch}<br>
+
 DOB: ${formatDOB(r.Date_of_birth)}<br>
+
 Email: ${r.Email_address||""}<br>
+
 Phone: ${r.Phone_numbers||""}
+
+
+
 `
 
+
+
 modalBody.innerHTML=html
+
+
+
 modal1.style.display="block"
 
 }
+
+
 
 function openGallery(){
 
 let html=""
 
+
+
 for(let i=1;i<=100;i++){
+
 html+=`<img src="group_pics/group-${i}.jpeg" onerror="this.style.display='none'">`
+
 }
 
+
+
 galleryGrid.innerHTML=html
+
+
+
 galleryModal.style.display="block"
 
 }
 
+
+
 function closeGallery(){
+
 galleryModal.style.display="none"
+
 }
 
+
+
 window.onclick=function(e){
-if(e.target.classList.contains("modal")) e.target.style.display="none"
+
+if(e.target.classList.contains("modal"))
+
+e.target.style.display="none"
+
 }
+
+
 
 loadData()
 
+
+
 </script>
 
+
+
 </body>
+
 </html>
