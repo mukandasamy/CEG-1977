@@ -116,27 +116,46 @@
         </div>
     </div>
 
-    <script>
-        let masterData = [];
-        let filteredData = [];
-        let currentPage = 1;
-        let rowsPerPage = 25;
-        let currentView = 'table';
-        const SILHOUETTE = 'https://via.placeholder.com/150?text=No+Image';
-        const CSV_URL = 'https://script.google.com/macros/s/AKfycbzTA7wxEdOUCAhEGf9zr37FnpkOtteSWVNCy5E5YWHD6BQvbIpMmuxeZ9qLEDy_pr1adQ/exec';
+<script>
+    let masterData = [];
+    let filteredData = [];
+    let currentPage = 1;
+    let rowsPerPage = 25;
+    let currentView = 'table';
+    const SILHOUETTE = 'https://via.placeholder.com/150?text=No+Image';
+    const DATA_URL = 'https://script.google.com/macros/s/AKfycbzTA7wxEdOUCAhEGf9zr37FnpkOtteSWVNCy5E5YWHD6BQvbIpMmuxeZ9qLEDy_pr1adQ/exec';
 
-        async function init() {
-            Papa.parse(CSV_URL, {
-                download: true,
-                header: true,
-                skipEmptyLines: true,
-                complete: function(results) {
-                    masterData = results.data;
-                    populateFilters();
-                    applyFilters();
-                }
-            });
+async function init() {
+    const DATA_URL = 'https://script.google.com/macros/s/AKfycbzTA7wxEdOUCAhEGf9zr37FnpkOtteSWVNCy5E5YWHD6BQvbIpMmuxeZ9qLEDy_pr1adQ/exec';
+    
+    try {
+        const response = await fetch(DATA_URL);
+        // We use .json() because your Apps Script sends JSON, not a CSV file
+        const data = await response.json();
+        
+        // Handle potential wrappers like { "data": [...] } or just an array [...]
+        masterData = Array.isArray(data) ? data : (data.data || []);
+        
+        if (masterData.length === 0) {
+            console.error("Data received is empty. Check your Google Apps Script structure.");
+            return;
         }
+
+        console.log("Successfully loaded", masterData.length, "records.");
+        
+        populateFilters();
+        applyFilters();
+    } catch (error) {
+        console.error("Critical Fetch Error:", error);
+        alert("Could not load data. Ensure your Apps Script is deployed as 'Me' and 'Anyone'.");
+    }
+}
+
+    // ... (Keep all other functions: populateFilters, applyFilters, renderData, etc., from the previous version) ...
+
+    // Ensure init runs on load
+    window.onload = init;
+</script>
 
         function populateFilters() {
             const branches = [...new Set(masterData.map(d => d.Branch_name))].sort();
