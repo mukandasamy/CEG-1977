@@ -2,175 +2,102 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CEG 1977 Golden Jubilee</title>
+    <title>CEG 1977 Batch Golden Jubilee</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { font-size: 14px; color: #334155; }
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 100; align-items: center; justify-content: center; }
-        .profile-img { object-fit: contain; background: #e2e8f0; width: 100%; height: 200px; }
-        .gallery-item { border: 1px solid #e2e8f0; padding: 2px; }
-        .sticky-top { position: sticky; top: 0; background: #f1f5f9; z-index: 10; }
+        .sticky-top { position: sticky; top: 0; background: #f1f5f9; }
     </style>
 </head>
-<body class="bg-slate-50">
+<body class="bg-slate-50 p-4">
 
-    <header class="bg-white p-4 shadow-sm flex items-center justify-between border-b">
-        <div class="flex items-center gap-4">
-            <img src="group_pics/college-1.jpeg" class="h-16" onerror="this.src='https://via.placeholder.com/60'">
-            <h1 class="text-xl font-bold uppercase tracking-tight">CEG 1977 Batch Golden Jubilee</h1>
-        </div>
-        <div class="flex gap-2">
-            <button onclick="showGallery()" class="bg-slate-800 text-white px-4 py-2 rounded">Gallery</button>
-            <input type="text" id="search" placeholder="Search data..." class="border p-2 rounded" oninput="handleFilter()">
-        </div>
+    <header class="bg-white p-4 shadow rounded mb-4 flex items-center justify-between">
+        <h1 class="text-xl font-bold uppercase">CEG 1977 Batch Golden Jubilee</h1>
+        <input type="text" id="searchBar" placeholder="Search..." class="border p-2 rounded" oninput="render()">
     </header>
 
-    <section class="p-4 bg-white border-b flex flex-wrap gap-4 items-center">
-        <select id="branchFilter" onchange="handleFilter()" class="border p-2 rounded"><option value="ALL">All Branches</option></select>
-        <select id="monthFilter" onchange="handleFilter()" class="border p-2 rounded"><option value="ALL">All Months</option></select>
-        <select id="letterFilter" onchange="handleFilter()" class="border p-2 rounded"><option value="ALL">A-Z</option></select>
-        <button onclick="clearFilters()" class="text-blue-600 font-semibold underline">Clear Filters</button>
-        <button id="viewToggle" onclick="toggleView()" class="ml-auto bg-blue-600 text-white px-4 py-2 rounded">Show Card View</button>
-    </section>
-
-    <main class="p-4">
-        <div id="tableContainer" class="bg-white shadow rounded overflow-hidden">
-            <table class="w-full text-left">
-                <thead class="sticky-top"><tr class="border-b"><th class="p-3">Name</th><th class="p-3">Branch</th><th class="p-3">DOB</th><th class="p-3">Action</th></tr></thead>
-                <tbody id="tableBody"></tbody>
-            </table>
-        </div>
-        <div id="cardContainer" class="hidden grid grid-cols-1 md:grid-cols-3 gap-4"></div>
-    </main>
-
-    <footer class="p-4 flex justify-between items-center bg-white border-t">
-        <select id="pageSize" onchange="changePageSize()" class="border p-2 rounded"><option>10</option><option selected>25</option><option>50</option></select>
-        <div class="flex gap-2"><button class="border p-2" onclick="changePage(-1)">Prev</button><span id="pageText" class="p-2">1</span><button class="border p-2" onclick="changePage(1)">Next</button></div>
-    </footer>
-
-    <div id="modal1" class="modal" onclick="closeModal('modal1')">
-        <div class="bg-white p-6 rounded-lg w-full max-w-2xl" onclick="event.stopPropagation()">
-            <h2 id="m1Name" class="text-2xl font-bold mb-4"></h2>
-            <div id="m1Imgs" class="grid grid-cols-3 gap-2 mb-4"></div>
-            <div id="m1Details" class="space-y-1"></div>
-            <div id="morePicsTrigger" class="mt-4"></div>
-        </div>
+    <div class="bg-white p-4 shadow rounded mb-4 flex gap-4">
+        <select id="branchFilter" onchange="render()" class="border p-2 rounded"><option value="ALL">All Branches</option></select>
+        <span id="recordCount" class="font-bold"></span>
     </div>
 
-    <div id="modal2" class="modal" onclick="closeModal('modal2')">
-        <div class="bg-white p-6 rounded-lg w-full max-w-4xl max-h-[80vh] overflow-y-auto">
-            <div id="m2Grid" class="grid grid-cols-5 gap-2"></div>
+    <div class="bg-white shadow rounded overflow-hidden">
+        <table class="w-full text-left">
+            <thead class="sticky-top bg-slate-100">
+                <tr><th class="p-3">Name</th><th class="p-3">Branch</th><th class="p-3">DOB</th><th class="p-3">Action</th></tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+    </div>
+
+    <div id="modal1" class="modal" onclick="closeModal('modal1')">
+        <div class="bg-white p-6 rounded-lg w-full max-w-lg" onclick="event.stopPropagation()">
+            <h2 id="m1Name" class="text-2xl font-bold mb-4"></h2>
+            <div id="m1Details"></div>
+            <button onclick="closeModal('modal1')" class="mt-4 bg-red-500 text-white p-2 rounded">Close</button>
         </div>
     </div>
 
     <script>
-        let allData = [], filteredData = [], page = 1, pageSize = 25, isTableView = true;
-        const API = 'https://script.google.com/macros/s/AKfycbyYMhxBdpR0z92oBljcE_QRjF_ZqKA8asjiviXkXG6sPXzVh3j9npVisxqtNZBsCgHyBg/exec';
+        // 1. GLOBAL DATA
+        let allData = [];
 
-async function init() {
-    const DATA_URL = 'https://script.google.com/macros/s/AKfycbyYMhxBdpR0z92oBljcE_QRjF_ZqKA8asjiviXkXG6sPXzVh3j9npVisxqtNZBsCgHyBg/exec';
-    
-    try {
-        console.log("Starting data fetch...");
-        const response = await fetch(DATA_URL);
-        
-        // 1. Get the raw response
-        const rawText = await response.text();
-        
-        // 2. Check if we got HTML instead of JSON (the "junk" you see)
-        if (rawText.trim().startsWith("<")) {
-            console.error("CRITICAL ERROR: The server returned an HTML page instead of JSON.");
-            console.error("This usually means your Google Deployment is set to 'Execute as User' or is asking for login.");
-            console.log("Raw HTML received:", rawText.substring(0, 500)); // Log first 500 chars
-            alert("Connection error: The server returned an HTML page (login required). Check your deployment settings.");
-            return;
+        // 2. DATA INITIALIZATION
+        async function init() {
+            const URL = 'https://script.google.com/macros/s/AKfycbyYMhxBdpR0z92oBljcE_QRjF_ZqKA8asjiviXkXG6sPXzVh3j9npVisxqtNZBsCgHyBg/exec';
+            try {
+                const res = await fetch(URL);
+                allData = await res.json();
+                populateFilters();
+                render();
+            } catch (e) {
+                console.error("Initialization Error:", e);
+                alert("Failed to load data. Check Console (F12).");
+            }
         }
 
-        // 3. If it's not HTML, parse as JSON
-        const data = JSON.parse(rawText);
-        
-        // 4. Ensure we have an array
-        allData = Array.isArray(data) ? data : (data.data || []);
-        filteredData = allData;
-        
-        console.log("Data loaded successfully:", allData.length, "records.");
-
-        // 5. Populate and Render
-        populateFilters();
-        render();
-
-    } catch (error) {
-        console.error("Fetch/Parse Error:", error);
-        alert("An error occurred. Check the F12 Console for details.");
-    }
-}
-
-        function handleFilter() {
-            const b = document.getElementById('branchFilter').value;
-            const s = document.getElementById('search').value.toLowerCase();
-            filteredData = allData.filter(d => (b === 'ALL' || d.Branch_name === b) && d.Name.toLowerCase().includes(s));
-            page = 1;
-            render();
+        // 3. FILTER LOGIC
+        function populateFilters() {
+            const branches = [...new Set(allData.map(d => d.Branch_name))].sort();
+            const select = document.getElementById('branchFilter');
+            branches.forEach(b => select.innerHTML += `<option value="${b}">${b}</option>`);
         }
 
+        // 4. RENDERING LOGIC
         function render() {
-            const body = document.getElementById('tableBody');
-            const paginated = filteredData.slice((page-1)*pageSize, page*pageSize);
-            body.innerHTML = paginated.map(d => `
+            const branch = document.getElementById('branchFilter').value;
+            const search = document.getElementById('searchBar').value.toLowerCase();
+            const tbody = document.getElementById('tableBody');
+            
+            const filtered = allData.filter(d => 
+                (branch === 'ALL' || d.Branch_name === branch) && 
+                (d.Name.toLowerCase().includes(search))
+            );
+
+            document.getElementById('recordCount').innerText = `Records: ${filtered.length}`;
+            tbody.innerHTML = filtered.map(d => `
                 <tr class="border-b">
                     <td class="p-3">${d.Name}</td>
                     <td class="p-3">${d.Branch_name}</td>
                     <td class="p-3">${d.Date_of_birth}</td>
-                    <td class="p-3"><button onclick="viewDetails('${d.Name}')" class="bg-blue-600 text-white px-2 py-1 rounded">Details</button></td>
+                    <td class="p-3"><button onclick="viewDetails('${d.Name}')" class="bg-blue-600 text-white px-3 py-1 rounded">View</button></td>
                 </tr>
             `).join('');
-            document.getElementById('pageText').innerText = `Page ${page}`;
         }
 
+        // 5. MODAL LOGIC
         function viewDetails(name) {
             const d = allData.find(x => x.Name === name);
             document.getElementById('m1Name').innerText = d.Name;
-            document.getElementById('m1Imgs').innerHTML = ['1977','2020','2027'].map(yr => 
-                `<img src="individual_pics/${name}-${yr}.jpeg" class="profile-img" onerror="this.src='https://via.placeholder.com/150'">`
-            ).join('');
-            document.getElementById('m1Details').innerHTML = Object.entries(d).map(([k,v]) => `<p><b>${k}:</b> ${v}</p>`).join('');
-            
-            // Logic for Modal 2 check
-            const btn = document.createElement('button');
-            btn.innerText = "Show More Pictures";
-            btn.className = "bg-green-600 text-white p-2 mt-4";
-            btn.onclick = () => openModal2(name);
-            document.getElementById('morePicsTrigger').innerHTML = '';
-            document.getElementById('morePicsTrigger').appendChild(btn);
-
+            document.getElementById('m1Details').innerHTML = Object.entries(d)
+                .map(([k, v]) => `<p><strong>${k}:</strong> ${v}</p>`).join('');
             document.getElementById('modal1').style.display = 'flex';
         }
 
-        function openModal2(name) {
-            const grid = document.getElementById('m2Grid');
-            grid.innerHTML = '';
-            for(let i=1; i<=25; i++) {
-                const img = document.createElement('img');
-                img.src = `group_pics/${name}-${i}.jpeg`;
-                img.onerror = () => img.style.display = 'none';
-                grid.appendChild(img);
-            }
-            document.getElementById('modal2').style.display = 'flex';
-        }
-
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-        function toggleView() { 
-            isTableView = !isTableView;
-            document.getElementById('tableContainer').classList.toggle('hidden');
-            document.getElementById('cardContainer').classList.toggle('hidden');
-            document.getElementById('viewToggle').innerText = isTableView ? 'Show Card View' : 'Show Table View';
-        }
-        function changePage(dir) { page += dir; if(page < 1) page = 1; render(); }
-        function changePageSize() { pageSize = document.getElementById('pageSize').value; render(); }
-        function clearFilters() { document.getElementById('branchFilter').value = 'ALL'; handleFilter(); }
-        
-        init();
+
+        // 6. START APP
+        window.onload = init;
     </script>
 </body>
 </html>
