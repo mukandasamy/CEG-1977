@@ -303,10 +303,10 @@ return dd+"-"+m
 
 async function loadData(){
 
-let res=await fetch(url)
+let cached=localStorage.getItem("ceg1977data")
 
-data=await res.json()
-
+if(cached){
+data=JSON.parse(cached)
 filtered=[...data]
 
 buildFilters()
@@ -315,6 +315,33 @@ loadingMessage.style.display="none"
 filters.style.display="flex"
 
 render()
+}
+
+try{
+
+let res=await fetch(url)
+
+let fresh=await res.json()
+
+data=fresh
+filtered=[...data]
+
+localStorage.setItem("ceg1977data",JSON.stringify(fresh))
+
+buildFilters()
+
+loadingMessage.style.display="none"
+filters.style.display="flex"
+
+render()
+
+}catch(e){
+
+if(!cached){
+loadingMessage.innerText="Unable to load directory"
+}
+
+}
 
 }
 
