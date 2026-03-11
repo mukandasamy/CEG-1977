@@ -4,79 +4,91 @@
     <meta charset="UTF-8">
     <title>CEG 1977 Batch Golden Jubilee</title>
     <style>
-        :root { --primary: #004a99; --bg: #f8fafc; --border: #e2e8f0; }
-        body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 14px; background: var(--bg); margin: 0; padding: 10px; }
-        .sticky-head { position: sticky; top: 0; background: #e2e8f0; }
-        .btn { padding: 6px 12px; cursor: pointer; background: var(--primary); color: white; border: none; border-radius: 4px; }
-        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 1000; align-items: center; justify-content: center; }
-        .modal-content { background: white; padding: 20px; width: 800px; max-height: 90vh; overflow-y: auto; border-radius: 4px; }
-        .img-row { display: flex; gap: 10px; margin-bottom: 15px; }
-        table { width: 100%; border-collapse: collapse; background: white; }
-        th, td { padding: 10px; border: 1px solid var(--border); text-align: left; }
-        .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; }
+        body { font-family: sans-serif; font-size: 14px; background: #f8fafc; padding: 20px; }
+        .container { max-width: 1200px; margin: auto; }
+        .header { display: flex; align-items: center; justify-content: space-between; background: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+        table { width: 100%; border-collapse: collapse; background: white; margin-top: 10px; }
+        th, td { padding: 12px; border: 1px solid #e2e8f0; text-align: left; }
+        .btn { padding: 8px 12px; cursor: pointer; background: #004a99; color: white; border: none; border-radius: 4px; }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); align-items: center; justify-content: center; z-index: 1000; }
+        .modal-content { background: white; padding: 25px; width: 80%; max-height: 90vh; overflow-y: auto; border-radius: 8px; }
     </style>
 </head>
 <body>
 
-<header style="display:flex; justify-content:space-between; padding:10px; background:white; margin-bottom:10px;">
-    <div style="display:flex; align-items:center; gap:10px;">
-        <img src="group_pics/college-1.jpeg" style="height:50px;" onerror="this.src='https://via.placeholder.com/50'">
-        <h1 style="margin:0;">CEG 1977 Batch Golden Jubilee</h1>
-    </div>
-    <div>
-        <button class="btn" onclick="showGallery()">Gallery</button>
-        <input type="text" id="search" placeholder="Search..." oninput="app.render()">
-    </div>
-</header>
-
-<div id="mainSection">
-    <div style="margin-bottom:10px;">
-        <select id="branchFilter" onchange="app.render()"><option value="ALL">All Branches</option></select>
-        <select id="monthFilter" onchange="app.render()"><option value="ALL">All Months</option></select>
-        <select id="letterFilter" onchange="app.render()"><option value="ALL">A-Z</option></select>
-        <button onclick="app.clearFilters()">Clear</button>
-        <button class="btn" onclick="app.toggleView()" id="viewBtn">Show Card View</button>
-        <span id="recordCount" style="float:right;"></span>
+<div class="container">
+    <div class="header">
+        <div style="display:flex; align-items:center; gap:15px;">
+            <img src="group_pics/college-1.jpeg" style="height:60px;" onerror="this.src='https://via.placeholder.com/100?text=Logo'">
+            <h1>CEG 1977 Batch Golden Jubilee</h1>
+        </div>
+        <div>
+            <button class="btn" onclick="showGallery()">Gallery</button>
+            <input type="text" id="search" placeholder="Search records..." oninput="app.renderTable()">
+        </div>
     </div>
 
-    <div id="tableContainer"><table id="dataTable"><thead class="sticky-head"><tr><th>Name</th><th>Branch</th><th>DOB</th><th>Action</th></tr></thead><tbody id="tableBody"></tbody></table></div>
-    <div id="cardContainer" class="card-grid" style="display:none;"></div>
+    <div style="margin-bottom:20px;">
+        <select id="branchFilter" onchange="app.renderTable()"><option value="ALL">All Branches</option></select>
+        <button class="btn" onclick="app.clearFilters()">Clear Filters</button>
+    </div>
+
+    <table id="dataTable">
+        <thead><tr><th>Name</th><th>Branch</th><th>DOB</th><th>Action</th></tr></thead>
+        <tbody id="tableBody"></tbody>
+    </table>
 </div>
 
-<div id="modal1" class="modal" onclick="closeModal('modal1')"><div class="modal-content" onclick="event.stopPropagation()"><div id="modal1Content"></div></div></div>
-<div id="modal2" class="modal" onclick="closeModal('modal2')"><div class="modal-content" id="modal2Content"></div></div>
+<div id="modal" class="modal" onclick="closeModal()"><div class="modal-content" onclick="event.stopPropagation()"><div id="modalBody"></div></div></div>
 
 <script>
 const app = {
-    data: [], view: 'table', page: 1, pageSize: 25,
+    data: [],
     async init() {
-        const res = await fetch('https://script.google.com/macros/s/AKfycbyYMhxBdpR0z92oBljcE_QRjF_ZqKA8asjiviXkXG6sPXzVh3j9npVisxqtNZBsCgHyBg/exec');
-        this.data = await res.json();
-        this.render();
+        try {
+            const res = await fetch('https://script.google.com/macros/s/AKfycbyYMhxBdpR0z92oBljcE_QRjF_ZqKA8asjiviXkXG6sPXzVh3j9npVisxqtNZBsCgHyBg/exec');
+            this.data = await res.json();
+            const branches = [...new Set(this.data.map(d => d.Branch_name))];
+            branches.forEach(b => document.getElementById('branchFilter').innerHTML += `<option value="${b}">${b}</option>`);
+            this.renderTable();
+        } catch (e) { console.error(e); }
     },
-    render() {
-        const filtered = this.data; // Add filtering logic here
-        const tbody = document.getElementById('tableBody');
-        tbody.innerHTML = filtered.map(d => `<tr><td>${d.Name}</td><td>${d.Branch_name}</td><td>${d.Date_of_birth}</td><td><button class="btn" onclick="app.viewDetails('${d.Name}')">View Details</button></td></tr>`).join('');
-    },
-    viewDetails(name) {
-        const d = this.data.find(x => x.Name === name);
-        document.getElementById('modal1Content').innerHTML = `
-            <div class="img-row">${['1977','2020','2027'].map(y => `<img src="individual_pics/${name}-${y}.jpeg" onerror="this.src='https://via.placeholder.com/150'">`).join('')}</div>
-            <div><strong>Name:</strong> ${d.Name}</div>
-            <button class="btn" onclick="app.showMore('${name}')">Show More Pictures</button>
-        `;
-        document.getElementById('modal1').style.display = 'flex';
-    },
-    toggleView() {
-        this.view = this.view === 'table' ? 'card' : 'table';
-        document.getElementById('tableContainer').style.display = this.view === 'table' ? 'block' : 'none';
-        document.getElementById('cardContainer').style.display = this.view === 'card' ? 'grid' : 'none';
+    renderTable() {
+        const query = document.getElementById('search').value.toLowerCase();
+        const branch = document.getElementById('branchFilter').value;
+        const filtered = this.data.filter(d => 
+            (branch === 'ALL' || d.Branch_name === branch) && 
+            Object.values(d).some(val => String(val).toLowerCase().includes(query))
+        );
+        document.getElementById('tableBody').innerHTML = filtered.map(d => `
+            <tr>
+                <td>${d.Name || ''}</td>
+                <td>${d.Branch_name || ''}</td>
+                <td>${d.Date_of_birth || ''}</td>
+                <td><button class="btn" onclick="openDetails('${d.Name}')">View Details</button></td>
+            </tr>
+        `).join('');
     }
 };
 
+function openDetails(name) {
+    const d = app.data.find(x => x.Name === name);
+    document.getElementById('modalBody').innerHTML = `
+        <div style="display:flex; gap:10px;">
+            ${['1977','2020','2027'].map(yr => `<img src="individual_pics/${name}-${yr}.jpeg" style="max-width:200px" onerror="this.src='https://via.placeholder.com/150?text=No+Photo'">`).join('')}
+        </div>
+        <h3>${d.Name}</h3>
+        <p><strong>Branch:</strong> ${d.Branch_name || 'N/A'}</p>
+        <p><strong>DOB:</strong> ${d.Date_of_birth || 'N/A'}</p>
+        <p><strong>Email:</strong> ${d.Email_address || 'N/A'}</p>
+    `;
+    document.getElementById('modal').style.display = 'flex';
+}
+
+function closeModal() { document.getElementById('modal').style.display = 'none'; }
+function showGallery() { alert("Gallery view logic triggered."); }
+
 window.onload = () => app.init();
-function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 </script>
 </body>
 </html>
