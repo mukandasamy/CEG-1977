@@ -5,89 +5,79 @@
     <title>CEG 1977 Batch Golden Jubilee</title>
     <style>
         body { font-family: sans-serif; font-size: 14px; background: #f8fafc; padding: 20px; }
-        .container { max-width: 1200px; margin: auto; }
         .header { display: flex; align-items: center; justify-content: space-between; background: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
-        table { width: 100%; border-collapse: collapse; background: white; margin-top: 10px; }
-        th, td { padding: 12px; border: 1px solid #e2e8f0; text-align: left; }
+        table { width: 100%; border-collapse: collapse; background: white; }
+        th, td { padding: 10px; border: 1px solid #e2e8f0; text-align: left; }
         .btn { padding: 8px 12px; cursor: pointer; background: #004a99; color: white; border: none; border-radius: 4px; }
-        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); align-items: center; justify-content: center; z-index: 1000; }
-        .modal-content { background: white; padding: 25px; width: 80%; max-height: 90vh; overflow-y: auto; border-radius: 8px; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="header">
-        <div style="display:flex; align-items:center; gap:15px;">
-            <img src="group_pics/college-1.jpeg" style="height:60px;" onerror="this.src='https://via.placeholder.com/100?text=Logo'">
-            <h1>CEG 1977 Batch Golden Jubilee</h1>
-        </div>
-        <div>
-            <button class="btn" onclick="showGallery()">Gallery</button>
-            <input type="text" id="search" placeholder="Search records..." oninput="app.renderTable()">
-        </div>
+<div class="header">
+    <div style="display:flex; align-items:center; gap:15px;">
+        <img src="group_pics/college-1.jpeg" style="height:60px;" onerror="this.src='https://via.placeholder.com/100'">
+        <h1>CEG 1977 Batch Golden Jubilee</h1>
     </div>
-
-    <div style="margin-bottom:20px;">
-        <select id="branchFilter" onchange="app.renderTable()"><option value="ALL">All Branches</option></select>
-        <button class="btn" onclick="app.clearFilters()">Clear Filters</button>
+    <div>
+        <button class="btn" onclick="openGallery()">Gallery</button>
+        <input type="text" id="search" placeholder="Search..." oninput="app.render()">
     </div>
-
-    <table id="dataTable">
-        <thead><tr><th>Name</th><th>Branch</th><th>DOB</th><th>Action</th></tr></thead>
-        <tbody id="tableBody"></tbody>
-    </table>
 </div>
 
-<div id="modal" class="modal" onclick="closeModal()"><div class="modal-content" onclick="event.stopPropagation()"><div id="modalBody"></div></div></div>
+<select id="branchFilter" onchange="app.render()"><option value="ALL">All Branches</option></select>
+<table id="dataTable">
+    <thead><tr><th>Name</th><th>Branch</th><th>DOB</th><th>Action</th></tr></thead>
+    <tbody id="tableBody"></tbody>
+</table>
 
 <script>
 const app = {
     data: [],
-    async init() {
-        try {
-            const res = await fetch('https://script.google.com/macros/s/AKfycbyYMhxBdpR0z92oBljcE_QRjF_ZqKA8asjiviXkXG6sPXzVh3j9npVisxqtNZBsCgHyBg/exec');
-            this.data = await res.json();
-            const branches = [...new Set(this.data.map(d => d.Branch_name))];
-            branches.forEach(b => document.getElementById('branchFilter').innerHTML += `<option value="${b}">${b}</option>`);
-            this.renderTable();
-        } catch (e) { console.error(e); }
+    // Simple helper to clean up the date format
+    formatDate(dStr) {
+        if (!dStr) return "";
+        // If it's already "21-Sep", return it. If it's an ISO string, format it.
+        if (dStr.includes("-") && dStr.length < 10) return dStr;
+        const d = new Date(dStr);
+        const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        return `${d.getDate().toString().padStart(2, '0')}-${months[d.getMonth()]}`;
     },
-    renderTable() {
-        const query = document.getElementById('search').value.toLowerCase();
+    async init() {
+        const res = await fetch('https://script.google.com/macros/s/AKfycbyYMhxBdpR0z92oBljcE_QRjF_ZqKA8asjiviXkXG6sPXzVh3j9npVisxqtNZBsCgHyBg/exec');
+        this.data = await res.json();
+        
+        // Debug: Log the first record to verify field names
+        console.log("Data structure sample:", this.data[0]);
+
+        // Populate Filters using 'Branch'
+        const branches = [...new Set(this.data.map(d => d.Branch))].filter(Boolean);
+        const select = document.getElementById('branchFilter');
+        branches.forEach(b => select.innerHTML += `<option value="${b}">${b}</option>`);
+        
+        this.render();
+    },
+    render() {
+        const tbody = document.getElementById('tableBody');
         const branch = document.getElementById('branchFilter').value;
+        const search = document.getElementById('search').value.toLowerCase();
+        
         const filtered = this.data.filter(d => 
-            (branch === 'ALL' || d.Branch_name === branch) && 
-            Object.values(d).some(val => String(val).toLowerCase().includes(query))
+            (branch === 'ALL' || d.Branch === branch) && 
+            (d.Name.toLowerCase().includes(search))
         );
-        document.getElementById('tableBody').innerHTML = filtered.map(d => `
+        
+        tbody.innerHTML = filtered.map(d => `
             <tr>
                 <td>${d.Name || ''}</td>
-                <td>${d.Branch_name || ''}</td>
-                <td>${d.Date_of_birth || ''}</td>
-                <td><button class="btn" onclick="openDetails('${d.Name}')">View Details</button></td>
+                <td>${d.Branch || ''}</td>
+                <td>${this.formatDate(d.Date_of_birth)}</td>
+                <td><button class="btn" onclick="alert(JSON.stringify(d, null, 2))">View Details</button></td>
             </tr>
         `).join('');
     }
 };
 
-function openDetails(name) {
-    const d = app.data.find(x => x.Name === name);
-    document.getElementById('modalBody').innerHTML = `
-        <div style="display:flex; gap:10px;">
-            ${['1977','2020','2027'].map(yr => `<img src="individual_pics/${name}-${yr}.jpeg" style="max-width:200px" onerror="this.src='https://via.placeholder.com/150?text=No+Photo'">`).join('')}
-        </div>
-        <h3>${d.Name}</h3>
-        <p><strong>Branch:</strong> ${d.Branch_name || 'N/A'}</p>
-        <p><strong>DOB:</strong> ${d.Date_of_birth || 'N/A'}</p>
-        <p><strong>Email:</strong> ${d.Email_address || 'N/A'}</p>
-    `;
-    document.getElementById('modal').style.display = 'flex';
-}
-
-function closeModal() { document.getElementById('modal').style.display = 'none'; }
-function showGallery() { alert("Gallery view logic triggered."); }
-
+function openGallery() { alert("Gallery View Loaded"); }
 window.onload = () => app.init();
 </script>
 </body>
