@@ -431,6 +431,8 @@ function render(){
 
 recordCount.innerText=filtered.length+" records"
 
+viewBtn.innerText = cardMode ? "Show Table View" : "Show Card View"
+
 if(cardMode)renderCards()
 else renderTable()
 
