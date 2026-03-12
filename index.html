@@ -351,6 +351,10 @@ loadingMessage.innerText="Unable to load directory"
 
 }
 
+function scrollToTop(){
+window.scrollTo({top:0, behavior:"smooth"})
+}
+  
 function buildFilters(){
 
 let branches=[...new Set(data.map(x=>x.Branch))].sort()
@@ -417,7 +421,11 @@ render()
 
 function pageSize(){return parseInt(document.getElementById("pageSize").value)}
 
-pageSize.onchange=function(){page=1;render()}
+document.getElementById("pageSize").onchange=function(){
+page=1
+render()
+scrollToTop()
+}
 
 function paginate(){
 
@@ -539,13 +547,23 @@ nextBtn.disabled=(page===total)
 
 }
 
-function prevPage(){if(page>1){page--;render()}}
+function prevPage(){
+if(page>1){
+page--;
+render();
+scrollToTop();
+}
+}
 
 function nextPage(){
 
 let total=Math.ceil(filtered.length/pageSize())
 
-if(page<total){page++;render()}
+if(page<total){
+page++;
+render();
+scrollToTop();
+}
 
 }
 
