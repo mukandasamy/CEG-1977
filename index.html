@@ -419,7 +419,11 @@ render()
 
 }
 
-function pageSize(){return parseInt(document.getElementById("pageSize").value)}
+function pageSize(){
+return parseInt(document.getElementById("pageSize").options[
+document.getElementById("pageSize").selectedIndex
+].value)
+}
 
 document.getElementById("pageSize").onchange=function(){
 page=1
