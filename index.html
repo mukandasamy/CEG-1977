@@ -355,17 +355,17 @@ function buildFilters(){
 
 let branches=[...new Set(data.map(x=>x.Branch))].sort()
 
-branchFilter.innerHTML="<option value='ALL'>All Branches</option>"
+branchFilter.innerHTML="<option value='ALL'>Branch</option>"
 
 branches.forEach(b=>branchFilter.innerHTML+=`<option>${b}</option>`)
 
-monthFilter.innerHTML="<option value='ALL'>All Months</option>"
+monthFilter.innerHTML="<option value='ALL'>DOB Jan-Dec</option>"
 
 months.forEach(m=>monthFilter.innerHTML+=`<option>${m}</option>`)
 
 let letters=[...new Set(data.map(x=>x.Name[0].toUpperCase()))].sort()
 
-alphaFilter.innerHTML="<option value='ALL'>All Letters</option>"
+alphaFilter.innerHTML="<option value='ALL'>Name A - Z</option>"
 
 letters.forEach(a=>alphaFilter.innerHTML+=`<option>${a}</option>`)
 
