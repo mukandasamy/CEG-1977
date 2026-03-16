@@ -2,169 +2,440 @@
 <html>
 <head>
 <meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy"
+content="
+default-src 'self';
+img-src 'self' https://drive.google.com https://*.googleusercontent.com https://*.usercontent.google.com data:;
+style-src 'self' 'unsafe-inline';
+script-src 'self' 'unsafe-inline';
+connect-src https://script.google.com https://script.googleusercontent.com;
+">
 <title>CEG 1977 Batch Golden Jubilee</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
+:root{
+  --maroon:#7a1f2b;
+  --maroon-dark:#5e1821;
+  --maroon-soft:#f7ecef;
+  --gold:#c9a227;
+  --gold-soft:#eadba8;
+  --cream:#faf7f0;
+  --card:#ffffff;
+  --text:#2f2a26;
+  --muted:#6d655c;
+  --border:#ddd4c4;
+  --line:#eee5d6;
+  --shadow:0 2px 6px rgba(0,0,0,0.06);
+  --shadow-hover:0 6px 16px rgba(0,0,0,0.15);
+}
+
+*{
+  box-sizing:border-box;
+}
 
 body{
-font-family:Arial,Helvetica;
-font-size:14px;
-margin:15px;
+  font-family:Arial,Helvetica,sans-serif;
+  font-size:14px;
+  margin:15px;
+  background:var(--cream);
+  color:var(--text);
 }
 
 header{
-display:flex;
-flex-wrap:wrap;
-align-items:center;
-gap:10px;
-border-bottom:1px solid #ccc;
-padding-bottom:10px;
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:12px;
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:14px 16px;
+  background:linear-gradient(135deg, var(--maroon) 0%, var(--maroon-dark) 100%);
+  box-shadow:var(--shadow);
+  margin-bottom:12px;
 }
 
-header img{height:70px}
+header img{
+  height:70px;
+  border-radius:8px;
+  background:#fff;
+}
 
-h1{margin:0;font-size:22px}
+h1{
+  margin:0;
+  font-size:22px;
+  color:#fff;
+}
 
 button{
-background:#4a6fa5;
-color:white;
-border:none;
-padding:10px 16px;
-font-size:16px;
-border-radius:4px;
-cursor:pointer;
+  background:var(--maroon);
+  color:#fff;
+  border:1px solid var(--maroon);
+  padding:10px 16px;
+  font-size:16px;
+  border-radius:8px;
+  cursor:pointer;
+  transition:all .2s ease;
 }
 
-button:disabled{opacity:.5}
+button:hover{
+  background:var(--maroon-dark);
+  border-color:var(--gold);
+}
+
+button:disabled{
+  opacity:.5;
+}
 
 #search{
-margin-left:auto;
-padding:6px;
-font-size:15px;
-width:240px;
+  margin-left:auto;
+  padding:8px 10px;
+  font-size:15px;
+  width:240px;
+  border:1px solid rgba(255,255,255,0.35);
+  border-radius:8px;
+  background:rgba(255,255,255,0.12);
+  color:#fff;
+}
+
+#search::placeholder{
+  color:#f2e7cf;
+}
+
+#search:focus{
+  outline:none;
+  border-color:var(--gold-soft);
+  background:rgba(255,255,255,0.18);
+}
+
+#loadingMessage{
+  color:var(--muted);
+  margin:10px 0 14px;
 }
 
 #filters{
-display:flex;
-flex-wrap:wrap;
-gap:10px;
-margin-top:12px;
-align-items:center;
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-top:12px;
+  align-items:center;
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:12px;
+  box-shadow:var(--shadow);
 }
 
 #tableView{
-overflow-x:auto;
-}
-  
-select{
-background:#4a6fa5;
-color:white;
-border:none;
-padding:8px;
-font-size:16px;
-height:36px;
+  overflow-x:auto;
 }
 
-#recordCount{margin-left:auto}
+select{
+  background:var(--maroon);
+  color:#fff;
+  border:1px solid var(--maroon);
+  padding:8px 10px;
+  font-size:16px;
+  height:38px;
+  border-radius:8px;
+}
+
+#recordCount{
+  margin-left:auto;
+  color:var(--maroon);
+  font-weight:700;
+}
 
 table{
-width:100%;
-border-collapse:collapse;
-margin-top:10px;
+  width:100%;
+  border-collapse:collapse;
+  margin-top:10px;
+  background:#fff;
 }
 
 th,td{
-border:1px solid #ddd;
-padding:6px;
+  border:1px solid var(--line);
+  padding:8px;
 }
 
 thead{
-background:#f1f5f9;
-position:sticky;
-top:0;
+  background:var(--maroon-soft);
+  color:var(--maroon);
+  position:sticky;
+  top:0;
 }
 
 .cardGrid{
-display:grid;
-grid-template-columns:repeat(auto-fill,minmax(330px,1fr));
-gap:14px;
-margin-top:14px;
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(270px, 270px));
+  gap:18px;
+  justify-content:start;
+  align-content:start;
 }
 
 .card{
-border:1px solid #999;
-padding:8px;
+  width:270px;
+  display:flex;
+  flex-direction:column;
+  background:var(--card);
+  border-radius:12px;
+  border:1px solid var(--border);
+  box-shadow:var(--shadow);
+  overflow:hidden;
+  padding:12px;
+  min-height:320px;
+  transition:box-shadow .2s ease, transform .2s ease;
+}
+
+.card:hover{
+  box-shadow:var(--shadow-hover);
+  transform:translateY(-2px);
+}
+
+@media (max-width: 640px){
+  .cardGrid{
+    grid-template-columns:1fr;
+    justify-content:center;
+  }
+
+  .card{
+    width:min(100%, 420px);
+    margin:0 auto;
+  }
 }
 
 .cardImages{
-display:flex;
-gap:6px;
-margin-bottom:6px;
+  display:grid;
+  grid-template-columns:repeat(3, 1fr);
+  gap:6px;
+  margin-bottom:12px;
+  flex:0 0 auto;
+}
+
+.cardImgBox{
+  width:100%;
+  aspect-ratio:1/1;
+  min-height:78px;
+  background:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+  border-radius:6px;
+  border:1px solid #efe5d1;
+}
+
+.cardImgBox:empty{
+  background:#faf7f0;
+  border:1px solid #eee3cb;
+}
+
+.cardImgBox img{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  object-position:center top;
+  display:block;
+}
+
+.cardBody{
+  display:flex;
+  flex-direction:column;
+  flex:1;
+  min-width:0;
+}
+
+.cardName{
+  font-weight:700;
+  font-size:16px;
+  line-height:1.3;
+  margin-bottom:6px;
+  min-height:42px;
+  word-break:break-word;
+  overflow-wrap:anywhere;
+  color:var(--maroon);
+}
+
+.cardMeta{
+  font-size:14px;
+  line-height:1.35;
+  margin-bottom:4px;
+  min-height:18px;
+  word-break:break-word;
+  overflow-wrap:anywhere;
+}
+
+.cardActions{
+  margin-top:auto;
+  padding-top:12px;
+}
+
+.cardActions button{
+  width:100%;
 }
 
 .footer{
-margin-top:12px;
-display:flex;
-gap:10px;
-align-items:center;
+  margin-top:12px;
+  display:flex;
+  gap:10px;
+  align-items:center;
+  flex-wrap:wrap;
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:12px;
+  box-shadow:var(--shadow);
+}
+
+#pageInfo{
+  color:var(--maroon);
+  font-weight:700;
 }
 
 .modal{
-display:none;
-position:fixed;
-top:0;
-left:0;
-width:100%;
-height:100%;
-background:rgba(0,0,0,.55);
+  display:none;
+  position:fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  background:rgba(0,0,0,.55);
+  z-index:999;
 }
 
 .modalContent{
-background:white;
-margin:20px auto;
-padding:18px;
-width:95%;
-max-height:90%;
-overflow:auto;
-line-height:1.8;
+  background:#fff;
+  margin:20px auto;
+  padding:18px;
+  width:95%;
+  max-height:90%;
+  overflow:auto;
+  line-height:1.8;
+  border-radius:14px;
+  border:1px solid var(--border);
+  box-shadow:0 12px 30px rgba(0,0,0,.22);
 }
 
 .closeX{
-float:right;
-font-size:22px;
-cursor:pointer;
+  float:right;
+  font-size:22px;
+  cursor:pointer;
+  color:var(--maroon);
+  font-weight:700;
+}
+
+h3{
+  color:var(--maroon);
+  margin-top:0;
+  border-bottom:2px solid var(--gold);
+  padding-bottom:6px;
 }
 
 .galleryGrid{
-display:flex;
-flex-wrap:wrap;
-gap:12px;
-align-items:flex-start;
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(180px, 1fr));
+  gap:12px;
+  align-items:start;
 }
 
-.galleryGrid img{
-height:auto;
-width:auto;
-align-self:flex-start;
+.galleryItem{
+  background:#fff;
+  border:1px solid #e5dcc8;
+  border-radius:10px;
+  overflow:hidden;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  aspect-ratio:3 / 4;
+  padding:6px;
+  box-sizing:border-box;
+}
+
+.galleryItem img{
+  max-width:100%;
+  max-height:100%;
+  width:auto;
+  height:auto;
+  object-fit:contain;
+  object-position:center top;
+  display:block;
+}
+
+@media (max-width: 640px){
+  .galleryGrid{
+    grid-template-columns:repeat(auto-fill, minmax(120px, 1fr));
+    gap:8px;
+  }
+
+  .galleryItem{
+    border-radius:8px;
+    padding:4px;
+  }
 }
 
 .zoomViewer{
-display:none;
-position:fixed;
-top:0;
-left:0;
-width:100%;
-height:100%;
-background:black;
-align-items:center;
-justify-content:center;
+  display:none;
+  position:fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  background:black;
+  align-items:center;
+  justify-content:center;
+  z-index:2000;
 }
 
 .zoomViewer img{
-max-width:90%;
-max-height:90%;
+  max-width:90%;
+  max-height:90%;
 }
 
+#modalImages{
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));
+  gap:12px;
+  margin-bottom:14px;
+}
+
+#modalImages img{
+  width:100%;
+  max-height:240px;
+  object-fit:contain;
+  object-position:center top;
+  border:1px solid #eadfc8;
+  border-radius:10px;
+  background:#faf7f0;
+  padding:6px;
+  cursor:pointer;
+}
+
+#modalDetails{
+  color:var(--text);
+}
+
+#modalDetails b{
+  color:var(--maroon);
+}
+
+@media (max-width: 700px){
+  header{
+    padding:12px;
+  }
+
+  header img{
+    height:56px;
+  }
+
+  h1{
+    font-size:19px;
+    width:100%;
+  }
+
+  #search{
+    margin-left:0;
+    width:100%;
+  }
+}
 </style>
 </head>
 
@@ -172,7 +443,7 @@ max-height:90%;
 
 <header>
 
-<img src="group_pics/college-1.jpeg">
+<img id="headerImage">
 
 <h1>CEG 1977 Batch Golden Jubilee</h1>
 
@@ -280,396 +551,641 @@ max-height:90%;
 </div>
 
 <script>
+const API_URL = "https://script.google.com/macros/s/AKfycbzScXIj_0DCDACS29_dGGHj8O36vojdCt_cDqdVvCrB4w3rghvhrr-Z571lRRx7nqCD_g/exec"
 
-const url="https://script.google.com/macros/s/AKfycbyYMhxBdpR0z92oBljcE_QRjF_ZqKA8asjiviXkXG6sPXzVh3j9npVisxqtNZBsCgHyBg/exec"
+let imageIndex = {
+  individual: {},
+  group: {}
+}
 
-let data=[]
-let filtered=[]
-let page=1
-let cardMode=true
+let data = []
+let filtered = []
+let page = 1
+let cardMode = true
 
-const months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
+const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
 
-function encodeName(n){return encodeURIComponent(n)}
+function escapeHtml(value){
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;")
+}
+
+function encodeName(n){
+  return encodeURIComponent(n)
+}
 
 function formatDOB(v){
+  if(!v) return ""
 
-if(!v)return ""
+  let d = new Date(v)
+  if(isNaN(d)) return v
 
-let d=new Date(v)
+  let dd = ("0" + d.getDate()).slice(-2)
+  let m = months[d.getMonth()]
 
-if(isNaN(d))return v
+  return dd + "-" + m
+}
 
-let dd=("0"+d.getDate()).slice(-2)
-let m=months[d.getMonth()]
+async function loadImageIndex(){
+  try{
+    const res = await fetch(API_URL + "?action=images")
+    const text = await res.text()
+    console.log("images raw response:", text)
+    imageIndex = JSON.parse(text)
+    console.log("imageIndex loaded:", imageIndex)
+  }catch(e){
+    console.error("loadImageIndex failed:", e)
+  }
+}
 
-return dd+"-"+m
+function prepareData(rows){
+  return rows.map(r => {
+    let searchText = Object.values(r)
+      .filter(v => v !== null && v !== undefined)
+      .join(" ")
+      .toLowerCase()
 
+    return {
+      ...r,
+      _searchText: searchText
+    }
+  })
+}
+
+function attachPrimaryImageUrls(rows){
+  return rows.map(r => {
+    let name = encodeName(r.Name || "")
+
+    return {
+      ...r,
+      _img1977: getIndividual(`${name}-1977.jpeg`),
+      _img2020: getIndividual(`${name}-2020.jpeg`),
+      _img2027: getIndividual(`${name}-2027.jpeg`)
+    }
+  })
 }
 
 async function loadData(){
+  await loadImageIndex()
+  console.log("after loadImageIndex:", imageIndex)
 
-let cached=localStorage.getItem("ceg1977data")
+  if(typeof headerImage !== "undefined" && headerImage){
+    headerImage.src = getGroup("college-1.jpeg")
+  }
 
-if(cached){
-data=JSON.parse(cached)
-filtered=[...data]
+  let cached = localStorage.getItem("ceg1977data")
 
-buildFilters()
+  if(cached){
+    data = attachPrimaryImageUrls(prepareData(JSON.parse(cached)))
+    filtered = [...data]
+    buildFilters(data)
+    loadingMessage.style.display = "none"
+    filters.style.display = "flex"
+    render()
+    preloadVisiblePageImages()
+    preloadNextPageImages()
+    return
+  }
 
-loadingMessage.style.display="none"
-filters.style.display="flex"
+  try{
+    let res = await fetch(API_URL + "?action=data")
+    let fresh = await res.json()
 
-render()
-}
+    data = attachPrimaryImageUrls(prepareData(fresh))
+    filtered = [...data]
 
-try{
+    localStorage.setItem("ceg1977data", JSON.stringify(fresh))
 
-let res=await fetch(url)
+    buildFilters(data)
+    loadingMessage.style.display = "none"
+    filters.style.display = "flex"
 
-let fresh=await res.json()
+    render()
+    preloadVisiblePageImages()
+    preloadNextPageImages()
 
-data=fresh
-filtered=[...data]
-
-localStorage.setItem("ceg1977data",JSON.stringify(fresh))
-
-buildFilters()
-
-loadingMessage.style.display="none"
-filters.style.display="flex"
-
-render()
-
-}catch(e){
-
-if(!cached){
-loadingMessage.innerText="Unable to load directory"
-}
-
-}
-
+  }catch(e){
+    console.error(e)
+    loadingMessage.innerText = "Unable to load directory"
+  }
 }
 
 function scrollToTop(){
-window.scrollTo({top:0, behavior:"smooth"})
-}
-  
-function buildFilters(){
-
-let branches=[...new Set(data.map(x=>x.Branch))].sort()
-
-branchFilter.innerHTML="<option value='ALL'>Branch</option>"
-
-branches.forEach(b=>branchFilter.innerHTML+=`<option>${b}</option>`)
-
-monthFilter.innerHTML="<option value='ALL'>DOB Jan-Dec</option>"
-
-months.forEach(m=>monthFilter.innerHTML+=`<option>${m}</option>`)
-
-let letters=[...new Set(data.map(x=>x.Name[0].toUpperCase()))].sort()
-
-alphaFilter.innerHTML="<option value='ALL'>Name A - Z</option>"
-
-letters.forEach(a=>alphaFilter.innerHTML+=`<option>${a}</option>`)
-
+  window.scrollTo({top:0, behavior:"smooth"})
 }
 
-function applyFilters(){
+function buildFilters(source = data){
+  const currentBranch = branchFilter.value || "ALL"
+  const currentMonth = monthFilter.value || "ALL"
+  const currentAlpha = alphaFilter.value || "ALL"
 
-let b=branchFilter.value
-let m=monthFilter.value
-let a=alphaFilter.value
-let s=search.value.toLowerCase()
+  let branches = [...new Set(
+    source.map(x => (x.Branch || "").trim()).filter(Boolean)
+  )].sort()
 
-filtered=data.filter(d=>{
+  branchFilter.innerHTML = "<option value='ALL'>Branch</option>"
+  branches.forEach(b => {
+    branchFilter.innerHTML += `<option value="${escapeHtml(b)}">${escapeHtml(b)}</option>`
+  })
 
-let dob=new Date(d.Date_of_birth)
-let mmm=months[dob.getMonth()]
+  let monthValues = [...new Set(
+    source.map(x => {
+      let dob = new Date(x.Date_of_birth)
+      return isNaN(dob) ? "" : months[dob.getMonth()]
+    }).filter(Boolean)
+  )]
 
-if(b!="ALL" && d.Branch!=b) return false
-if(m!="ALL" && mmm!=m) return false
-if(a!="ALL" && d.Name[0].toUpperCase()!=a) return false
-if(s && !Object.values(d).join(" ").toLowerCase().includes(s)) return false
+  monthFilter.innerHTML = "<option value='ALL'>DOB Jan-Dec</option>"
+  months.forEach(m => {
+    if(monthValues.includes(m)){
+      monthFilter.innerHTML += `<option value="${m}">${m}</option>`
+    }
+  })
 
-return true
+  let letters = [...new Set(
+    source.map(x => (x.Name || "").trim().charAt(0).toUpperCase()).filter(Boolean)
+  )].sort()
 
-})
+  alphaFilter.innerHTML = "<option value='ALL'>Name A - Z</option>"
+  letters.forEach(a => {
+    alphaFilter.innerHTML += `<option value="${a}">${escapeHtml(a)}</option>`
+  })
 
-page=1
-render()
+  if([...branchFilter.options].some(o => o.value === currentBranch)) branchFilter.value = currentBranch
+  else branchFilter.value = "ALL"
 
+  if([...monthFilter.options].some(o => o.value === currentMonth)) monthFilter.value = currentMonth
+  else monthFilter.value = "ALL"
+
+  if([...alphaFilter.options].some(o => o.value === currentAlpha)) alphaFilter.value = currentAlpha
+  else alphaFilter.value = "ALL"
 }
 
-branchFilter.onchange=applyFilters
-monthFilter.onchange=applyFilters
-alphaFilter.onchange=applyFilters
-search.oninput=applyFilters
+function rebuildBranchFilter(source){
+  const currentBranch = branchFilter.value || "ALL"
+
+  let branches = [...new Set(
+    source.map(x => (x.Branch || "").trim()).filter(Boolean)
+  )].sort()
+
+  branchFilter.innerHTML = "<option value='ALL'>Branch</option>"
+  branches.forEach(b => {
+    branchFilter.innerHTML += `<option value="${escapeHtml(b)}">${escapeHtml(b)}</option>`
+  })
+
+  if([...branchFilter.options].some(o => o.value === currentBranch)) branchFilter.value = currentBranch
+  else branchFilter.value = "ALL"
+}
+
+function rebuildMonthFilter(source){
+  const currentMonth = monthFilter.value || "ALL"
+
+  let monthValues = [...new Set(
+    source.map(x => {
+      let dob = new Date(x.Date_of_birth)
+      return isNaN(dob) ? "" : months[dob.getMonth()]
+    }).filter(Boolean)
+  )]
+
+  monthFilter.innerHTML = "<option value='ALL'>DOB Jan-Dec</option>"
+  months.forEach(m => {
+    if(monthValues.includes(m)){
+      monthFilter.innerHTML += `<option value="${m}">${m}</option>`
+    }
+  })
+
+  if([...monthFilter.options].some(o => o.value === currentMonth)) monthFilter.value = currentMonth
+  else monthFilter.value = "ALL"
+}
+
+function rebuildAlphaFilter(source){
+  const currentAlpha = alphaFilter.value || "ALL"
+
+  let letters = [...new Set(
+    source.map(x => (x.Name || "").trim().charAt(0).toUpperCase()).filter(Boolean)
+  )].sort()
+
+  alphaFilter.innerHTML = "<option value='ALL'>Name A - Z</option>"
+  letters.forEach(a => {
+    alphaFilter.innerHTML += `<option value="${a}">${escapeHtml(a)}</option>`
+  })
+
+  if([...alphaFilter.options].some(o => o.value === currentAlpha)) alphaFilter.value = currentAlpha
+  else alphaFilter.value = "ALL"
+}
+
+function applyFilters(changedFilter = ""){
+  console.log("applyFilters called")
+  let b = branchFilter.value
+  let m = monthFilter.value
+  let a = alphaFilter.value
+  let s = search.value.toLowerCase()
+
+  function matchesSearch(d){
+    return !s || (d._searchText || "").includes(s)
+  }
+
+  function getMonthValue(d){
+    let dob = new Date(d.Date_of_birth)
+    return isNaN(dob) ? "" : months[dob.getMonth()]
+  }
+
+  function getAlphaValue(d){
+    return (d.Name || "").trim().charAt(0).toUpperCase()
+  }
+
+  filtered = data.filter(d => {
+    let mmm = getMonthValue(d)
+    let firstLetter = getAlphaValue(d)
+
+    if(b !== "ALL" && d.Branch !== b) return false
+    if(m !== "ALL" && mmm !== m) return false
+    if(a !== "ALL" && firstLetter !== a) return false
+    if(!matchesSearch(d)) return false
+
+    return true
+  })
+
+  let branchSource = data.filter(d => {
+    let mmm = getMonthValue(d)
+    let firstLetter = getAlphaValue(d)
+
+    if(m !== "ALL" && mmm !== m) return false
+    if(a !== "ALL" && firstLetter !== a) return false
+    if(!matchesSearch(d)) return false
+
+    return true
+  })
+
+  let monthSource = data.filter(d => {
+    let firstLetter = getAlphaValue(d)
+
+    if(b !== "ALL" && d.Branch !== b) return false
+    if(a !== "ALL" && firstLetter !== a) return false
+    if(!matchesSearch(d)) return false
+
+    return true
+  })
+
+  let alphaSource = data.filter(d => {
+    let mmm = getMonthValue(d)
+
+    if(b !== "ALL" && d.Branch !== b) return false
+    if(m !== "ALL" && mmm !== m) return false
+    if(!matchesSearch(d)) return false
+
+    return true
+  })
+
+  rebuildBranchFilter(branchSource)
+  rebuildMonthFilter(monthSource)
+  rebuildAlphaFilter(alphaSource)
+
+  page = 1
+  render()
+}
 
 function clearFilters(){
-
-search.value=""
-branchFilter.value="ALL"
-monthFilter.value="ALL"
-alphaFilter.value="ALL"
-
-filtered=[...data]
-
-render()
-
+  search.value = ""
+  branchFilter.value = "ALL"
+  monthFilter.value = "ALL"
+  alphaFilter.value = "ALL"
+  filtered = [...data]
+  buildFilters(data)
+  page = 1
+  render()
 }
 
 function pageSize(){
-return parseInt(document.getElementById("pageSize").options[
-document.getElementById("pageSize").selectedIndex
-].value)
+  return parseInt(document.getElementById("pageSize").options[
+    document.getElementById("pageSize").selectedIndex
+  ].value)
 }
 
-document.getElementById("pageSize").onchange=function(){
-page=1
-render()
-scrollToTop()
+document.getElementById("pageSize").onchange = function(){
+  page = 1
+  render()
+  scrollToTop()
 }
 
 function paginate(){
-
-let start=(page-1)*pageSize()
-
-return filtered.slice(start,start+pageSize())
-
+  let start = (page - 1) * pageSize()
+  return filtered.slice(start, start + pageSize())
 }
 
 function render(){
+  recordCount.innerText = filtered.length + " records"
+  viewBtn.innerText = cardMode ? "Show Table View" : "Show Card View"
 
-recordCount.innerText=filtered.length+" records"
+  if(cardMode) renderCards()
+  else renderTable()
 
-viewBtn.innerText = cardMode ? "Show Table View" : "Show Card View"
+  updatePagination()
 
-if(cardMode)renderCards()
-else renderTable()
-
-updatePagination()
-
+  preloadVisiblePageImages()
+  preloadNextPageImages()
 }
 
 function renderTable(){
+  let rows = paginate()
 
-let rows=paginate()
+  let html = "<table><thead><tr><th>Name</th><th>Branch</th><th>DOB</th><th>Email</th><th>Phone</th><th>Action</th></tr></thead><tbody>"
 
-let html="<table><thead><tr><th>Name</th><th>Branch</th><th>DOB</th><th>Email</th><th>Phone</th><th>Action</th></tr></thead><tbody>"
+  rows.forEach((r,i) => {
+    let idx = (page - 1) * pageSize() + i
 
-rows.forEach((r,i)=>{
+    html += `
+    <tr>
+      <td>${r.Name}</td>
+      <td>${r.Branch}</td>
+      <td>${formatDOB(r.Date_of_birth)}</td>
+      <td>${r.Email_address || ""}</td>
+      <td>${r.Phone_numbers || ""}</td>
+      <td><button onclick="showDetails(${idx})">View Details</button></td>
+    </tr>
+    `
+  })
 
-let idx=(page-1)*pageSize()+i
-
-html+=`
-
-<tr>
-<td>${r.Name}</td>
-<td>${r.Branch}</td>
-<td>${formatDOB(r.Date_of_birth)}</td>
-<td>${r.Email_address||""}</td>
-<td>${r.Phone_numbers||""}</td>
-<td><button onclick="showDetails(${idx})">View Details</button></td>
-</tr>
-
-`
-
-})
-
-html+="</tbody></table>"
-
-tableView.innerHTML=html
-
+  html += "</tbody></table>"
+  tableView.innerHTML = html
 }
 
 function renderCards(){
+  const rows = paginate();
+  let html = "<div class='cardGrid'>";
 
-let rows=paginate()
+  rows.forEach((r,i)=>{
+    const idx = (page - 1) * pageSize() + i;
 
-let html="<div class='cardGrid'>"
+    const name   = r.Name || "&nbsp;";
+    const branch = r.Branch || "&nbsp;";
+    const dob    = formatDOB(r.Date_of_birth) || "&nbsp;";
+    const email  = r.Email_address || "&nbsp;";
+    const phone  = r.Phone_numbers || "&nbsp;";
 
-rows.forEach((r,i)=>{
+    html += `
+    <div class="card">
+      <div class="cardImages">
+        <div class="cardImgBox">
+          ${r._img1977 ? `
+          <img loading="lazy" decoding="async"
+               src="${r._img1977}"
+               onclick="zoom(this)"
+               onerror="this.remove()">
+          ` : ""}
+        </div>
 
-let idx=(page-1)*pageSize()+i
+        <div class="cardImgBox">
+          ${r._img2020 ? `
+          <img loading="lazy" decoding="async"
+               src="${r._img2020}"
+               onclick="zoom(this)"
+               onerror="this.remove()">
+          ` : ""}
+        </div>
 
-let name=encodeName(r.Name)
+        <div class="cardImgBox">
+          ${r._img2027 ? `
+          <img loading="lazy" decoding="async"
+               src="${r._img2027}"
+               onclick="zoom(this)"
+               onerror="this.remove()">
+          ` : ""}
+        </div>
+      </div>
 
-html+=`
+      <div class="cardBody">
+        <div class="cardName">${name}</div>
+        <div class="cardMeta">${branch}</div>
+        <div class="cardMeta">${dob}</div>
+        <div class="cardMeta">${email}</div>
+        <div class="cardMeta">${phone}</div>
 
-<div class="card">
+        <div class="cardActions">
+          <button onclick="showDetails(${idx})">View Details</button>
+        </div>
+      </div>
+    </div>
+    `;
+  });
 
-<div class="cardImages">
-
-<img loading="lazy" src="individual_pics/${name}-1977.jpeg" onclick="zoom(this)" onerror="this.style.display='none'">
-<img loading="lazy" src="individual_pics/${name}-2020.jpeg" onclick="zoom(this)" onerror="this.style.display='none'">
-<img loading="lazy" src="individual_pics/${name}-2027.jpeg" onclick="zoom(this)" onerror="this.style.display='none'">
-
-</div>
-
-<b>${r.Name}</b><br>
-${r.Branch}<br>
-${formatDOB(r.Date_of_birth)}<br>
-${r.Email_address||""}<br>
-${r.Phone_numbers||""}<br><br>
-
-<button onclick="showDetails(${idx})">View Details</button>
-
-</div>
-
-`
-
-})
-
-html+="</div>"
-
-cardView.innerHTML=html
-
+  html += "</div>";
+  cardView.innerHTML = html;
 }
 
 function toggleView(){
+  cardMode = !cardMode
 
-cardMode=!cardMode
+  tableView.style.display = cardMode ? "none" : "block"
+  cardView.style.display = cardMode ? "block" : "none"
 
-tableView.style.display=cardMode?"none":"block"
-cardView.style.display=cardMode?"block":"none"
+  viewBtn.innerText = cardMode ? "Show Table View" : "Show Card View"
 
-viewBtn.innerText=cardMode?"Show Table View":"Show Card View"
-
-render()
-
+  render()
 }
 
 function updatePagination(){
+  let total = Math.ceil(filtered.length / pageSize())
 
-let total=Math.ceil(filtered.length/pageSize())
+  pageInfo.innerText = "Page " + page + " / " + (total || 1)
 
-pageInfo.innerText="Page "+page+" / "+(total||1)
-
-prevBtn.disabled=(page===1)
-nextBtn.disabled=(page===total)
-
+  prevBtn.disabled = (page === 1)
+  nextBtn.disabled = (page === total || total === 0)
 }
 
 function prevPage(){
-if(page>1){
-page--;
-render();
-scrollToTop();
-}
+  if(page > 1){
+    page--
+    render()
+    scrollToTop()
+  }
 }
 
 function nextPage(){
+  let total = Math.ceil(filtered.length / pageSize())
 
-let total=Math.ceil(filtered.length/pageSize())
-
-if(page<total){
-page++;
-render();
-scrollToTop();
+  if(page < total){
+    page++
+    render()
+    scrollToTop()
+  }
 }
 
+function getIndividual(file){
+  if(!imageIndex || !imageIndex.individual) return ""
+
+  let decoded = decodeURIComponent(file)
+  let id = imageIndex.individual[decoded]
+
+  if(!id) return ""
+
+  return "https://drive.google.com/thumbnail?id=" + id + "&sz=w800"
+}
+
+function getGroup(file){
+  if(!imageIndex || !imageIndex.group) return ""
+
+  let decoded = decodeURIComponent(file)
+  let id = imageIndex.group[decoded]
+
+  if(!id) return ""
+
+  return "https://drive.google.com/thumbnail?id=" + id + "&sz=w1000"
+}
+
+function preloadImage(src){
+  if(!src) return
+  const img = new Image()
+  img.decoding = "async"
+  img.src = src
+}
+
+function preloadRecordImages(r){
+  if(!r) return
+
+  preloadImage(r._img1977 || "")
+  preloadImage(r._img2020 || "")
+  preloadImage(r._img2027 || "")
+}
+
+function preloadVisiblePageImages(){
+  let rows = paginate()
+  rows.forEach(r => preloadRecordImages(r))
+}
+
+function preloadNextPageImages(){
+  let start = page * pageSize()
+  let nextRows = filtered.slice(start, start + pageSize())
+  nextRows.forEach(r => preloadRecordImages(r))
 }
 
 function showDetails(i){
+  let r = filtered[i]
+  if(!r) return
 
-let r=filtered[i]
+  let name = encodeName(r.Name || "")
 
-let name=encodeName(r.Name)
+  let img1 = r._img1977 || ""
+  let img2 = r._img2020 || ""
+  let img3 = r._img2027 || ""
 
-modalImages.innerHTML=`
+  let modalImgsHTML = ""
 
-<img loading="lazy" src="individual_pics/${name}-1977.jpeg" onclick="zoom(this)" onerror="this.style.display='none'">
-<img loading="lazy" src="individual_pics/${name}-2020.jpeg" onclick="zoom(this)" onerror="this.style.display='none'">
-<img loading="lazy" src="individual_pics/${name}-2027.jpeg" onclick="zoom(this)" onerror="this.style.display='none'">
+  if(img1) modalImgsHTML += `<img loading="lazy" decoding="async" src="${img1}" onclick="zoom(this)" onerror="this.style.display='none'">`
+  if(img2) modalImgsHTML += `<img loading="lazy" decoding="async" src="${img2}" onclick="zoom(this)" onerror="this.style.display='none'">`
+  if(img3) modalImgsHTML += `<img loading="lazy" decoding="async" src="${img3}" onclick="zoom(this)" onerror="this.style.display='none'">`
 
-`
+  modalImages.innerHTML = modalImgsHTML
 
-let html=""
+  let html = ""
 
-for(let k in r){
-html+=`<b>${k}</b>: ${r[k]||""}<br>`
-}
+  for(let k in r){
+    if(k.startsWith("_")) continue
 
-modalDetails.innerHTML=html
+    let value = r[k] || ""
 
-let test=new Image()
+    if(k === "Date_of_birth" || k === "Anniversary_date"){
+      value = formatDOB(value)
+    }
 
-test.onload=function(){
-moreBtn.style.display="inline-block"
-}
+    html += `<b>${escapeHtml(k)}</b>: ${escapeHtml(value)}<br>`
+  }
 
-test.onerror=function(){
-moreBtn.style.display="none"
-}
+  modalDetails.innerHTML = html
 
-test.src=`group_pics/${name}-1.jpeg`
+  let hasMorePics = false
+  let decodedName = decodeURIComponent(name)
 
-moreBtn.onclick=function(){openMorePics(name)}
+  if(imageIndex && imageIndex.group){
+    for(let file in imageIndex.group){
+      if(file.startsWith(decodedName + "-")){
+        hasMorePics = true
+        break
+      }
+    }
+  }
 
-modal1.style.display="block"
+  moreBtn.style.display = hasMorePics ? "inline-block" : "none"
+  moreBtn.onclick = function(){ openMorePics(name) }
 
+  modal1.style.display = "block"
 }
 
 function openMorePics(name){
+  let decodedName = decodeURIComponent(name);
+  let html = "";
 
-let html=""
+  if(!imageIndex || !imageIndex.group){
+    modal2Images.innerHTML = "";
+    modal2.style.display = "block";
+    return;
+  }
 
-for(let i=1;i<=25;i++){
+  for(let file in imageIndex.group){
+    if(file.startsWith(decodedName + "-")){
+      let src = getGroup(file);
+      if(src){
+        html += `
+          <div class="galleryItem">
+            <img loading="lazy" decoding="async" src="${src}" onclick="zoom(this)" onerror="this.closest('.galleryItem').remove()">
+          </div>
+        `;
+      }
+    }
+  }
 
-html+=`<img loading="lazy" src="group_pics/${name}-${i}.jpeg" onclick="zoom(this)" onerror="this.style.display='none'">`
-
-}
-
-modal2Images.innerHTML=html
-
-modal2.style.display="block"
-
+  modal2Images.innerHTML = html;
+  modal2.style.display = "block";
 }
 
 function openGallery(){
+  let html = "";
 
-let html=""
+  for(let file in imageIndex.group){
+    if(file.startsWith("group-")){
+      html += `
+        <div class="galleryItem">
+          <img loading="lazy" decoding="async" src="${getGroup(file)}" onclick="zoom(this)" onerror="this.closest('.galleryItem').remove()">
+        </div>
+      `;
+    }
+  }
 
-for(let i=1;i<=100;i++){
-
-html+=`<img loading="lazy" src="group_pics/group-${i}.jpeg" onclick="zoom(this)" onerror="this.style.display='none'">`
-
-}
-
-galleryGrid.innerHTML=html
-
-galleryModal.style.display="block"
-
+  galleryGrid.innerHTML = html;
+  galleryModal.style.display = "block";
 }
 
 function closeGallery(){
-galleryModal.style.display="none"
+  galleryModal.style.display = "none"
 }
 
 function zoom(img){
-
-zoomImg.src=img.src
-
-zoomViewer.style.display="flex"
-
+  zoomImg.src = img.src
+  zoomViewer.style.display = "flex"
 }
 
 function closeZoom(){
-
-zoomViewer.style.display="none"
-
+  zoomViewer.style.display = "none"
 }
 
-window.onclick=function(e){
-
-if(e.target.classList.contains("modal"))
-e.target.style.display="none"
-
+window.onclick = function(e){
+  if(e.target.classList.contains("modal")){
+    e.target.style.display = "none"
+  }
 }
+
+window.addEventListener("DOMContentLoaded", () => {
+  branchFilter.onchange = () => applyFilters("branch")
+  monthFilter.onchange = () => applyFilters("month")
+  alphaFilter.onchange = () => applyFilters("alpha")
+  search.oninput = () => applyFilters("search")
+})
 
 loadData()
-
 </script>
 
 </body>
